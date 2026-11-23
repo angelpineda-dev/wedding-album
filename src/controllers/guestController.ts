@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { checkPresence, findPublicEvent, joinEvent, toPublicEvent } from '../services/guestService.ts';
+import { completeUpload, listOwnMedia, startUpload } from '../services/mediaService.ts';
+import { MEDIA_KIND } from '../core/const/media.ts';
 
 const codeParam = z.strictObject({ code: z.string().trim().min(4).max(16) });
 const joinBody = z.strictObject({ name: z.string().trim().min(1).max(80) });
@@ -33,4 +35,30 @@ const postPresence = async (req: Request, res: Response) => {
     return res.json({ success: true, data: await checkPresence(id, event, position) });
 };
 
-export { getPublicEvent, postJoin, getMe, postPresence };
+const uploadBody = z.strictObject({
+    kind: z.enum(MEDIA_KIND),
+    mimeType: z.string().trim().toLowerCase().max(100),
+    sizeBytes: z.number().int().positive(),
+    latitude: presenceBody.shape.latitude,
+    longitude: presenceBody.shape.longitude,
+});
+const mediaIdParam = z.strictObject({ id: z.uuid() });
+
+/** Step 1 of an upload: get a URL to PUT the file to. */
+const postMedia = async (req: Request, res: Response) => {
+    const { kind, mimeType, sizeBytes, latitude, longitude } = uploadBody.parse(req.body);
+    const result = await startUpload(req.guest!, { kind, mimeType, sizeBytes, position: { latitude, longitude } });
+    return res.status(201).json({ success: true, data: result });
+};
+
+/** Step 2: after the PUT succeeded. */
+const postCompleteMedia = async (req: Request, res: Response) => {
+    const { id } = mediaIdParam.parse(req.params);
+    return res.json({ success: true, data: await completeUpload(req.guest!, id) });
+};
+
+const getMyMedia = async (req: Request, res: Response) => {
+    return res.json({ success: true, data: await listOwnMedia(req.guest!.id) });
+};
+
+export { getPublicEvent, postJoin, getMe, postPresence, postMedia, postCompleteMedia, getMyMedia };

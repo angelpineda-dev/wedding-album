@@ -39,6 +39,21 @@ const envSchema = z.object({
         .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean))
         .pipe(z.array(z.url().refine((origin) => new URL(origin).origin === origin, 'must be a bare origin (scheme://host[:port])'))),
 
+    // S3-compatible object storage for photos/videos (MinIO locally, R2 or S3 in production).
+    // S3_ENDPOINT empty = AWS S3. The API never receives the files: it hands out presigned URLs.
+    S3_ENDPOINT: z.url().optional(),
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    S3_BUCKET: z.string().min(3).default('wedding-album-media'),
+    S3_ACCESS_KEY_ID: z.string().min(1),
+    S3_SECRET_ACCESS_KEY: z.string().min(1),
+    // MinIO needs path-style URLs (http://host/bucket/key).
+    S3_FORCE_PATH_STYLE: booleanString.default(false),
+    UPLOAD_URL_TTL_SECONDS: positiveInt.max(3600).default(600),
+    DOWNLOAD_URL_TTL_SECONDS: positiveInt.max(86_400).default(3600),
+    // Per guest: upload URLs issued per window.
+    UPLOAD_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(10),
+    UPLOAD_RATE_LIMIT_MAX: positiveInt.default(60),
+
     // Public (QR) endpoints, per IP. Guests at one venue often share an IP.
     PUBLIC_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(1),
     PUBLIC_RATE_LIMIT_MAX: positiveInt.default(120),

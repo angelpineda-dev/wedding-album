@@ -16,6 +16,20 @@ enum EventStatus {
   SUSPENDED
 }
 
+enum MediaKind {
+  PHOTO
+  VIDEO
+}
+
+// UPLOADING: URL issued, file not confirmed. PENDING: waiting for moderation.
+// PUBLISHED: in the gallery. HIDDEN: rejected or taken down by a moderator.
+enum MediaStatus {
+  UPLOADING
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+
 // Suspended users cannot sign in; suspending also revokes every session.
 enum UserStatus {
   ACTIVE
@@ -43,6 +57,7 @@ model User {
   sessions            Session[]
   magicLinks          MagicLink[]
   events              Event[]
+  moderatedMedia      Media[]
   
   @@map("users")          
 }
@@ -106,6 +121,7 @@ model Event {
   createdAt          DateTime    @default(now()) @onCreate(now())
   updatedAt          DateTime    @default(now()) @onUpdate(now())
   guests             Guest[]
+  media              Media[]
 
   @@index([ownerId])
   @@index([status])
@@ -123,7 +139,31 @@ model Guest {
   expiresAt  DateTime
   lastSeenAt DateTime?
   createdAt  DateTime  @default(now()) @onCreate(now())
+  media      Media[]
 
   @@index([eventId])
   @@map("guests")
+}
+
+// A photo or video a guest uploaded. The file lives in object storage under `storageKey`.
+model Media {
+  id            String      @id @onCreate(uuid())
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guestId       String
+  guest         Guest       @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  kind          MediaKind
+  status        MediaStatus @default(UPLOADING)
+  storageKey    String      @unique
+  mimeType      String
+  sizeBytes     Int
+  createdAt     DateTime    @default(now()) @onCreate(now())
+  uploadedAt    DateTime?
+  publishedAt   DateTime?
+  moderatedById Int?
+  moderatedBy   User?       @relation(fields: [moderatedById], references: [id])
+
+  @@index([eventId, status])
+  @@index([guestId])
+  @@map("media")
 }

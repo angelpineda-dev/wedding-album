@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { TEST_DATABASE_URL } from './test/testEnv.ts';
+import { TEST_DATABASE_URL, TEST_S3 } from './test/testEnv.ts';
 
 export default defineConfig({
     test: {
@@ -16,6 +16,7 @@ export default defineConfig({
             BCRYPT_COST: '10',
             AUTH_RATE_LIMIT_MAX: '1000',
             CORS_ORIGINS: 'http://localhost:5173',
+            ...TEST_S3,
         },
     },
 });

@@ -104,18 +104,16 @@ export async function findGuestByToken(token: string) {
 }
 
 /**
- * Whether a guest at `position` may upload now. The position is checked and dropped:
- * it is never stored (the guest screens promise this).
+ * Whether a guest at `position` may upload now. Pure: the position is checked and dropped,
+ * never stored (the guest screens promise this).
  */
-export async function checkPresence(guestId: string, event: EventRow, position: Coordinates) {
+export function evaluatePresence(event: EventRow, position: Coordinates) {
     const window = uploadWindow(event);
 
     const distance = event.geofenceEnabled && event.latitude !== null && event.longitude !== null
         ? Math.round(distanceMeters(position, { latitude: event.latitude, longitude: event.longitude }))
         : null;
     const inside = distance === null || distance <= event.radiusMeters;
-
-    await db.orm.public.Guest.where({ id: guestId }).update({ lastSeenAt: new Date() });
 
     return {
         canUpload: inside && window === UPLOAD_WINDOW.OPEN,
@@ -126,4 +124,10 @@ export async function checkPresence(guestId: string, event: EventRow, position: 
         opensAt: event.opensAt,
         closesAt: event.closesAt,
     };
+}
+
+/** `evaluatePresence` for the presence screen; also records that the guest is active. */
+export async function checkPresence(guestId: string, event: EventRow, position: Coordinates) {
+    await db.orm.public.Guest.where({ id: guestId }).update({ lastSeenAt: new Date() });
+    return evaluatePresence(event, position);
 }

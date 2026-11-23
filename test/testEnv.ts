@@ -9,3 +9,12 @@ export function assertTestDatabase(url: string): void {
         throw new Error(`Refusing to run tests against "${dbName}": the database name must end with "_test".`);
     }
 }
+
+/** MinIO from docker-compose; tests use their own bucket. */
+export const TEST_S3 = {
+    S3_ENDPOINT: process.env['TEST_S3_ENDPOINT'] ?? 'http://localhost:9000',
+    S3_BUCKET: 'wedding-album-media-test',
+    S3_ACCESS_KEY_ID: 'minioadmin',
+    S3_SECRET_ACCESS_KEY: 'minioadmin',
+    S3_FORCE_PATH_STYLE: 'true',
+} as const;

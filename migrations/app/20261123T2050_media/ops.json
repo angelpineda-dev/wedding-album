@@ -1,0 +1,447 @@
+[
+  {
+    "id": "table.media",
+    "label": "Create table \"media\"",
+    "summary": "Creates table \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"media\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"media\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"media\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"media\"",
+        "sql": "CREATE TABLE \"public\".\"media\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"eventId\" text NOT NULL,\n  \"guestId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"kind\" text NOT NULL,\n  \"mimeType\" text NOT NULL,\n  \"moderatedById\" int4,\n  \"publishedAt\" timestamptz(3),\n  \"sizeBytes\" int4 NOT NULL,\n  \"status\" text DEFAULT 'UPLOADING' NOT NULL,\n  \"storageKey\" text NOT NULL,\n  \"uploadedAt\" timestamptz(3),\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"media_kind_check_9979bd59\" CHECK (\"kind\" IN ('PHOTO', 'VIDEO')),\n  CONSTRAINT \"media_status_check_5ee79b2a\" CHECK (\"status\" IN ('UPLOADING', 'PENDING', 'PUBLISHED', 'HIDDEN'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"media\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"media\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"media\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.media.media_storageKey_key",
+    "label": "Add unique constraint on \"media\" (storageKey)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "media_storageKey_key",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"media_storageKey_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "media_storageKey_key",
+          "public",
+          "\"public\".\"media\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"media_storageKey_key\" on \"media\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"media_storageKey_key\"",
+        "sql": "ALTER TABLE \"public\".\"media\" ADD CONSTRAINT \"media_storageKey_key\" UNIQUE (\"storageKey\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"media_storageKey_key\" exists on (storageKey)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "media_storageKey_key",
+          "public",
+          "\"public\".\"media\"",
+          "u",
+          "[\"storageKey\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.media.media_eventId_idx_6a266d47",
+    "label": "Create index \"media_eventId_idx_6a266d47\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "media_eventId_idx_6a266d47",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"media_eventId_idx_6a266d47\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"media_eventId_idx_6a266d47\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"media_eventId_idx_6a266d47\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"media_eventId_idx_6a266d47\"",
+        "sql": "CREATE INDEX \"media_eventId_idx_6a266d47\" ON \"public\".\"media\" (\"eventId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"media_eventId_idx_6a266d47\" exists on \"media\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"media_eventId_idx_6a266d47\"",
+          "i",
+          "I",
+          "\"public\".\"media\"",
+          "btree",
+          "[\"eventId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.media.media_eventId_status_idx_c51df527",
+    "label": "Create index \"media_eventId_status_idx_c51df527\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "media_eventId_status_idx_c51df527",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"media_eventId_status_idx_c51df527\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"media_eventId_status_idx_c51df527\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"media_eventId_status_idx_c51df527\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"media_eventId_status_idx_c51df527\"",
+        "sql": "CREATE INDEX \"media_eventId_status_idx_c51df527\" ON \"public\".\"media\" (\"eventId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"media_eventId_status_idx_c51df527\" exists on \"media\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"media_eventId_status_idx_c51df527\"",
+          "i",
+          "I",
+          "\"public\".\"media\"",
+          "btree",
+          "[\"eventId\",\"status\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.media.media_guestId_idx_39c95865",
+    "label": "Create index \"media_guestId_idx_39c95865\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "media_guestId_idx_39c95865",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"media_guestId_idx_39c95865\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"media_guestId_idx_39c95865\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"media_guestId_idx_39c95865\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"media_guestId_idx_39c95865\"",
+        "sql": "CREATE INDEX \"media_guestId_idx_39c95865\" ON \"public\".\"media\" (\"guestId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"media_guestId_idx_39c95865\" exists on \"media\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"media_guestId_idx_39c95865\"",
+          "i",
+          "I",
+          "\"public\".\"media\"",
+          "btree",
+          "[\"guestId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.media.media_moderatedById_idx_4b155aa3",
+    "label": "Create index \"media_moderatedById_idx_4b155aa3\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "media_moderatedById_idx_4b155aa3",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"media_moderatedById_idx_4b155aa3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"media_moderatedById_idx_4b155aa3\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"media_moderatedById_idx_4b155aa3\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"media_moderatedById_idx_4b155aa3\"",
+        "sql": "CREATE INDEX \"media_moderatedById_idx_4b155aa3\" ON \"public\".\"media\" (\"moderatedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"media_moderatedById_idx_4b155aa3\" exists on \"media\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"media_moderatedById_idx_4b155aa3\"",
+          "i",
+          "I",
+          "\"public\".\"media\"",
+          "btree",
+          "[\"moderatedById\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.media.media_eventId_fkey",
+    "label": "Add foreign key \"media_eventId_fkey\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "media_eventId_fkey",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"media_eventId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "media_eventId_fkey",
+          "public",
+          "\"public\".\"media\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"media_eventId_fkey\" on \"media\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"media_eventId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"media\"\nADD CONSTRAINT \"media_eventId_fkey\"\nFOREIGN KEY (\"eventId\")\nREFERENCES \"public\".\"events\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"media_eventId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "media_eventId_fkey",
+          "public",
+          "\"public\".\"media\"",
+          "f",
+          "[\"eventId\"]",
+          "\"public\".\"events\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.media.media_guestId_fkey",
+    "label": "Add foreign key \"media_guestId_fkey\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "media_guestId_fkey",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"media_guestId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "media_guestId_fkey",
+          "public",
+          "\"public\".\"media\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"media_guestId_fkey\" on \"media\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"media_guestId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"media\"\nADD CONSTRAINT \"media_guestId_fkey\"\nFOREIGN KEY (\"guestId\")\nREFERENCES \"public\".\"guests\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"media_guestId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "media_guestId_fkey",
+          "public",
+          "\"public\".\"media\"",
+          "f",
+          "[\"guestId\"]",
+          "\"public\".\"guests\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.media.media_moderatedById_fkey",
+    "label": "Add foreign key \"media_moderatedById_fkey\" on \"media\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "media_moderatedById_fkey",
+        "table": "media"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"media_moderatedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "media_moderatedById_fkey",
+          "public",
+          "\"public\".\"media\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"media_moderatedById_fkey\" on \"media\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"media_moderatedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"media\"\nADD CONSTRAINT \"media_moderatedById_fkey\"\nFOREIGN KEY (\"moderatedById\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"media_moderatedById_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "media_moderatedById_fkey",
+          "public",
+          "\"public\".\"media\"",
+          "f",
+          "[\"moderatedById\"]",
+          "\"public\".\"users\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

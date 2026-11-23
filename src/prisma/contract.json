@@ -16,6 +16,10 @@
       "model": "MagicLink",
       "namespace": "public"
     },
+    "media": {
+      "model": "Media",
+      "namespace": "public"
+    },
     "sessions": {
       "model": "Session",
       "namespace": "public"
@@ -52,6 +56,40 @@
               {
                 "name": "WEDDING",
                 "value": "WEDDING"
+              }
+            ]
+          },
+          "MediaKind": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "PHOTO",
+                "value": "PHOTO"
+              },
+              {
+                "name": "VIDEO",
+                "value": "VIDEO"
+              }
+            ]
+          },
+          "MediaStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "UPLOADING",
+                "value": "UPLOADING"
+              },
+              {
+                "name": "PENDING",
+                "value": "PENDING"
+              },
+              {
+                "name": "PUBLISHED",
+                "value": "PUBLISHED"
+              },
+              {
+                "name": "HIDDEN",
+                "value": "HIDDEN"
               }
             ]
           },
@@ -273,6 +311,21 @@
                   "namespace": "public"
                 }
               },
+              "media": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "eventId"
+                  ]
+                },
+                "to": {
+                  "model": "Media",
+                  "namespace": "public"
+                }
+              },
               "owner": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -434,6 +487,21 @@
                   "model": "Event",
                   "namespace": "public"
                 }
+              },
+              "media": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "guestId"
+                  ]
+                },
+                "to": {
+                  "model": "Media",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -559,6 +627,207 @@
               },
               "namespaceId": "public",
               "table": "magic_links"
+            }
+          },
+          "Media": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "eventId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "guestId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "kind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "MediaKind",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "mimeType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "moderatedById": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "publishedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "sizeBytes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "MediaStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "storageKey": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "uploadedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "event": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "eventId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Event",
+                  "namespace": "public"
+                }
+              },
+              "guest": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "guestId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Guest",
+                  "namespace": "public"
+                }
+              },
+              "moderatedBy": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "moderatedById"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "eventId": {
+                  "column": "eventId"
+                },
+                "guestId": {
+                  "column": "guestId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "kind": {
+                  "column": "kind"
+                },
+                "mimeType": {
+                  "column": "mimeType"
+                },
+                "moderatedById": {
+                  "column": "moderatedById"
+                },
+                "publishedAt": {
+                  "column": "publishedAt"
+                },
+                "sizeBytes": {
+                  "column": "sizeBytes"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "storageKey": {
+                  "column": "storageKey"
+                },
+                "uploadedAt": {
+                  "column": "uploadedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "media"
             }
           },
           "Session": {
@@ -841,6 +1110,21 @@
                 },
                 "to": {
                   "model": "MagicLink",
+                  "namespace": "public"
+                }
+              },
+              "moderatedMedia": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "moderatedById"
+                  ]
+                },
+                "to": {
+                  "model": "Media",
                   "namespace": "public"
                 }
               },
@@ -1331,6 +1615,219 @@
                 }
               ]
             },
+            "media": {
+              "checks": [
+                {
+                  "expression": "\"kind\" IN ('PHOTO', 'VIDEO')",
+                  "name": "media_kind_check_9979bd59",
+                  "prefix": "media_kind_check"
+                },
+                {
+                  "expression": "\"status\" IN ('UPLOADING', 'PENDING', 'PUBLISHED', 'HIDDEN')",
+                  "name": "media_status_check_5ee79b2a",
+                  "prefix": "media_status_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "eventId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "guestId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "kind": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "MediaKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "mimeType": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "moderatedById": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "publishedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "sizeBytes": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "UPLOADING"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "MediaStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "storageKey": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "uploadedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "media_eventId_idx_6a266d47"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "eventId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "events"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "media_guestId_idx_39c95865"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "guestId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "guests"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "media_moderatedById_idx_4b155aa3"
+                  },
+                  "source": {
+                    "columns": [
+                      "moderatedById"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "media"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "eventId"
+                  ],
+                  "name": "media_eventId_idx_6a266d47",
+                  "prefix": "media_eventId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "eventId",
+                    "status"
+                  ],
+                  "name": "media_eventId_status_idx_c51df527",
+                  "prefix": "media_eventId_status_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "guestId"
+                  ],
+                  "name": "media_guestId_idx_39c95865",
+                  "prefix": "media_guestId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "moderatedById"
+                  ],
+                  "name": "media_moderatedById_idx_4b155aa3",
+                  "prefix": "media_moderatedById_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "storageKey"
+                  ]
+                }
+              ]
+            },
             "sessions": {
               "columns": {
                 "createdAt": {
@@ -1609,6 +2106,22 @@
                 "WEDDING"
               ]
             },
+            "MediaKind": {
+              "kind": "valueSet",
+              "values": [
+                "PHOTO",
+                "VIDEO"
+              ]
+            },
+            "MediaStatus": {
+              "kind": "valueSet",
+              "values": [
+                "UPLOADING",
+                "PENDING",
+                "PUBLISHED",
+                "HIDDEN"
+              ]
+            },
             "Role": {
               "kind": "valueSet",
               "values": [
@@ -1630,10 +2143,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "812f50e38908e6ff0c8930f575542dbe6d36683a628762edda77ce979e666d5b"
+    "storageHash": "b6f36e9756411faa78ac24cf6b442efad20aed906607ea03eb8ac570352f8622"
   },
   "execution": {
-    "executionHash": "aaafdd8ff0493b8a2b0164e5fe1bfa61f29820acdbecb0434fc7ebdca876b67f",
+    "executionHash": "406d9f466b76e5ac26a59165899ce5dfb4779d9c6609acb8894f13a4c88df67e",
     "mutations": {
       "defaults": [
         {
@@ -1721,6 +2234,31 @@
           },
           "ref": {
             "entry": "magic_links",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
+            "entry": "media",
+            "field": "createdAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "media",
             "field": "id",
             "namespace": "public"
           }

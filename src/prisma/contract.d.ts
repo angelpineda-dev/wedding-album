@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'812f50e38908e6ff0c8930f575542dbe6d36683a628762edda77ce979e666d5b'>;
+  StorageHashBase<'b6f36e9756411faa78ac24cf6b442efad20aed906607ea03eb8ac570352f8622'>;
 export type ExecutionHash =
-  ExecutionHashBase<'aaafdd8ff0493b8a2b0164e5fe1bfa61f29820acdbecb0434fc7ebdca876b67f'>;
+  ExecutionHashBase<'406d9f466b76e5ac26a59165899ce5dfb4779d9c6609acb8894f13a4c88df67e'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -285,6 +285,13 @@ type FieldTypeOverrides = {
         };
         readonly type: { readonly output: 'WEDDING'; readonly input: 'WEDDING' };
       };
+      readonly Media: {
+        readonly kind: { readonly output: 'PHOTO' | 'VIDEO'; readonly input: 'PHOTO' | 'VIDEO' };
+        readonly status: {
+          readonly output: 'UPLOADING' | 'PENDING' | 'PUBLISHED' | 'HIDDEN';
+          readonly input: 'UPLOADING' | 'PENDING' | 'PUBLISHED' | 'HIDDEN';
+        };
+      };
       readonly User: {
         readonly role: {
           readonly output: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
@@ -322,6 +329,13 @@ type ColumnTypeOverrides = {
         readonly input: 'PENDING' | 'ENABLED' | 'SUSPENDED';
       };
       readonly type: { readonly output: 'WEDDING'; readonly input: 'WEDDING' };
+    };
+    readonly media: {
+      readonly kind: { readonly output: 'PHOTO' | 'VIDEO'; readonly input: 'PHOTO' | 'VIDEO' };
+      readonly status: {
+        readonly output: 'UPLOADING' | 'PENDING' | 'PUBLISHED' | 'HIDDEN';
+        readonly input: 'UPLOADING' | 'PENDING' | 'PUBLISHED' | 'HIDDEN';
+      };
     };
     readonly users: {
       readonly role: {
@@ -373,8 +387,9 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['Event']['updatedAt'];
     venueName: FieldOutputTypes['public']['Event']['venueName'];
     guests: public_Guest[];
+    media: public_Media[];
     owner: public_User;
-    readonly [RelationKeys]?: 'guests' | 'owner';
+    readonly [RelationKeys]?: 'guests' | 'media' | 'owner';
   };
   export type public_Guest = {
     createdAt: FieldOutputTypes['public']['Guest']['createdAt'];
@@ -385,7 +400,8 @@ export namespace Models {
     name: FieldOutputTypes['public']['Guest']['name'];
     tokenHash: FieldOutputTypes['public']['Guest']['tokenHash'];
     event: public_Event;
-    readonly [RelationKeys]?: 'event';
+    media: public_Media[];
+    readonly [RelationKeys]?: 'event' | 'media';
   };
   export type public_MagicLink = {
     createdAt: FieldOutputTypes['public']['MagicLink']['createdAt'];
@@ -396,6 +412,24 @@ export namespace Models {
     userId: FieldOutputTypes['public']['MagicLink']['userId'];
     user: public_User;
     readonly [RelationKeys]?: 'user';
+  };
+  export type public_Media = {
+    createdAt: FieldOutputTypes['public']['Media']['createdAt'];
+    eventId: FieldOutputTypes['public']['Media']['eventId'];
+    guestId: FieldOutputTypes['public']['Media']['guestId'];
+    id: FieldOutputTypes['public']['Media']['id'];
+    kind: FieldOutputTypes['public']['Media']['kind'];
+    mimeType: FieldOutputTypes['public']['Media']['mimeType'];
+    moderatedById: FieldOutputTypes['public']['Media']['moderatedById'];
+    publishedAt: FieldOutputTypes['public']['Media']['publishedAt'];
+    sizeBytes: FieldOutputTypes['public']['Media']['sizeBytes'];
+    status: FieldOutputTypes['public']['Media']['status'];
+    storageKey: FieldOutputTypes['public']['Media']['storageKey'];
+    uploadedAt: FieldOutputTypes['public']['Media']['uploadedAt'];
+    event: public_Event;
+    guest: public_Guest;
+    moderatedBy: public_User | null;
+    readonly [RelationKeys]?: 'event' | 'guest' | 'moderatedBy';
   };
   export type public_Session = {
     createdAt: FieldOutputTypes['public']['Session']['createdAt'];
@@ -427,8 +461,9 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     events: public_Event[];
     magicLinks: public_MagicLink[];
+    moderatedMedia: public_Media[];
     sessions: public_Session[];
-    readonly [RelationKeys]?: 'events' | 'magicLinks' | 'sessions';
+    readonly [RelationKeys]?: 'events' | 'magicLinks' | 'moderatedMedia' | 'sessions';
   };
 }
 
@@ -437,6 +472,7 @@ export declare const models: {
     Event: Models.public_Event;
     Guest: Models.public_Guest;
     MagicLink: Models.public_MagicLink;
+    Media: Models.public_Media;
     Session: Models.public_Session;
     User: Models.public_User;
   };
@@ -787,6 +823,156 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly media: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly eventId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly guestId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly kind: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly mimeType: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly moderatedById: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly publishedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly sizeBytes: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'UPLOADING'>;
+                  };
+                  readonly many: false;
+                };
+                readonly storageKey: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly uploadedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['storageKey'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'media_eventId_idx_6a266d47';
+                  readonly prefix: 'media_eventId_idx';
+                  readonly columns: readonly ['eventId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'media_eventId_status_idx_c51df527';
+                  readonly prefix: 'media_eventId_status_idx';
+                  readonly columns: readonly ['eventId', 'status'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'media_guestId_idx_39c95865';
+                  readonly prefix: 'media_guestId_idx';
+                  readonly columns: readonly ['guestId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'media_moderatedById_idx_4b155aa3';
+                  readonly prefix: 'media_moderatedById_idx';
+                  readonly columns: readonly ['moderatedById'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media';
+                    readonly columns: readonly ['eventId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'events';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media';
+                    readonly columns: readonly ['guestId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'guests';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'media';
+                    readonly columns: readonly ['moderatedById'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'users';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly sessions: {
               columns: {
                 readonly createdAt: {
@@ -1005,6 +1191,14 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['WEDDING'];
             };
+            readonly MediaKind: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['PHOTO', 'VIDEO'];
+            };
+            readonly MediaStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['UPLOADING', 'PENDING', 'PUBLISHED', 'HIDDEN'];
+            };
             readonly Role: {
               readonly kind: 'valueSet';
               readonly values: readonly ['SUPER_ADMIN', 'ADMIN', 'USER'];
@@ -1030,6 +1224,7 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'MagicLink';
     };
+    readonly media: { readonly namespace: 'public' & NamespaceId; readonly model: 'Media' };
     readonly sessions: { readonly namespace: 'public' & NamespaceId; readonly model: 'Session' };
     readonly users: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
   };
@@ -1152,6 +1347,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['eventId'];
                 };
               };
+              readonly media: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Media';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['eventId'];
+                };
+              };
               readonly owner: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
@@ -1245,6 +1451,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly media: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Media';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['guestId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'guests';
@@ -1320,6 +1537,123 @@ type ContractBase = Omit<
                 readonly tokenHash: { readonly column: 'tokenHash' };
                 readonly usedAt: { readonly column: 'usedAt' };
                 readonly userId: { readonly column: 'userId' };
+              };
+            };
+          };
+          readonly Media: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly eventId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly guestId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly kind: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly mimeType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly moderatedById: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly publishedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly sizeBytes: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly storageKey: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly uploadedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly event: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Event';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['eventId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly guest: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Guest';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['guestId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly moderatedBy: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['moderatedById'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'media';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly eventId: { readonly column: 'eventId' };
+                readonly guestId: { readonly column: 'guestId' };
+                readonly id: { readonly column: 'id' };
+                readonly kind: { readonly column: 'kind' };
+                readonly mimeType: { readonly column: 'mimeType' };
+                readonly moderatedById: { readonly column: 'moderatedById' };
+                readonly publishedAt: { readonly column: 'publishedAt' };
+                readonly sizeBytes: { readonly column: 'sizeBytes' };
+                readonly status: { readonly column: 'status' };
+                readonly storageKey: { readonly column: 'storageKey' };
+                readonly uploadedAt: { readonly column: 'uploadedAt' };
               };
             };
           };
@@ -1499,6 +1833,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['userId'];
                 };
               };
+              readonly moderatedMedia: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Media';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['moderatedById'];
+                };
+              };
               readonly sessions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1546,6 +1891,22 @@ type ContractBase = Omit<
             readonly codecId: 'pg/text@1';
             readonly members: readonly [{ readonly name: 'WEDDING'; readonly value: 'WEDDING' }];
           };
+          readonly MediaKind: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'PHOTO'; readonly value: 'PHOTO' },
+              { readonly name: 'VIDEO'; readonly value: 'VIDEO' },
+            ];
+          };
+          readonly MediaStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'UPLOADING'; readonly value: 'UPLOADING' },
+              { readonly name: 'PENDING'; readonly value: 'PENDING' },
+              { readonly name: 'PUBLISHED'; readonly value: 'PUBLISHED' },
+              { readonly name: 'HIDDEN'; readonly value: 'HIDDEN' },
+            ];
+          };
           readonly Role: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -1569,6 +1930,16 @@ type ContractBase = Omit<
             { readonly name: 'SUSPENDED'; readonly value: 'SUSPENDED' },
           ];
           readonly EventType: readonly [{ readonly name: 'WEDDING'; readonly value: 'WEDDING' }];
+          readonly MediaKind: readonly [
+            { readonly name: 'PHOTO'; readonly value: 'PHOTO' },
+            { readonly name: 'VIDEO'; readonly value: 'VIDEO' },
+          ];
+          readonly MediaStatus: readonly [
+            { readonly name: 'UPLOADING'; readonly value: 'UPLOADING' },
+            { readonly name: 'PENDING'; readonly value: 'PENDING' },
+            { readonly name: 'PUBLISHED'; readonly value: 'PUBLISHED' },
+            { readonly name: 'HIDDEN'; readonly value: 'HIDDEN' },
+          ];
           readonly Role: readonly [
             { readonly name: 'SUPER_ADMIN'; readonly value: 'SUPER_ADMIN' },
             { readonly name: 'ADMIN'; readonly value: 'ADMIN' },
@@ -1683,6 +2054,26 @@ type ContractBase = Omit<
           readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'magic_links';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'media';
+            readonly field: 'createdAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'media';
             readonly field: 'id';
             readonly namespace: 'public';
           };
