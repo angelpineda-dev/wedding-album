@@ -1,0 +1,14 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/guest/me'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{guestToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 401', () => pm.response.to.have.status(401));

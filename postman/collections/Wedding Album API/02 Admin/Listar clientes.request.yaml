@@ -1,0 +1,15 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/admin/clients?status=ACTIVE'
+queryParams:
+  - key: status
+    value: 'ACTIVE'
+order: 1000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      // Si el cliente ya existía (409 al registrar), toma su id de aquí.
+      const me = pm.response.json().data.find(c => c.email === pm.environment.get('clientEmail'));
+      if (me) pm.environment.set('clientId', String(me.id));

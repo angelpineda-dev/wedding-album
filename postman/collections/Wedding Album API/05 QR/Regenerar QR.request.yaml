@@ -1,0 +1,12 @@
+$kind: http-request
+description: |-
+  Nuevo código; el anterior deja de funcionar. Actualiza `eventCode`.
+method: POST
+url: '{{baseUrl}}/events/{{eventId}}/qr/rotate'
+order: 3000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      pm.environment.set('eventCode', pm.response.json().data.publicCode);

@@ -1,0 +1,25 @@
+$kind: http-request
+description: |-
+  Rota el refresh token: el anterior queda revocado. Reusar uno revocado cierra todas las sesiones del usuario.
+method: POST
+url: '{{baseUrl}}/auth/refresh'
+order: 5000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+  - key: X-Client-Type
+    value: 'mobile'
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      const data = pm.response.json().data;
+      pm.environment.set('clientToken', data.accessToken);
+      pm.environment.set('refreshToken', data.refreshToken);

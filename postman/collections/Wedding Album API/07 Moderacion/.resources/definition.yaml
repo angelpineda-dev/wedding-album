@@ -1,0 +1,10 @@
+$kind: collection
+name: '07 Moderacion'
+description: |-
+  Dueño del evento o SUPER_ADMIN (cambia el token a {{adminToken}} para probar como superadmin).
+order: 8000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{clientToken}}'

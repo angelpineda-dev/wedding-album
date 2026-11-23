@@ -1,0 +1,14 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/auth/logout-all'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{clientToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 204', () => pm.response.to.have.status(204));

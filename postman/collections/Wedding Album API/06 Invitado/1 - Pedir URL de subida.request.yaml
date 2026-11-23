@@ -1,0 +1,32 @@
+$kind: http-request
+description: |-
+  Devuelve una URL PUT prefirmada (10 min). Content-Type y Content-Length van firmados.
+method: POST
+url: '{{baseUrl}}/guest/media'
+order: 6000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "kind": "PHOTO",
+      "mimeType": "image/jpeg",
+      "sizeBytes": {{demoSize}},
+      "latitude": 20.66,
+      "longitude": -103.35
+    }
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      // Archivo de demo: el texto de 'Subir archivo'. El tamaño firmado debe coincidir con lo que se envía.
+      pm.variables.set('demoSize', String(new TextEncoder().encode(pm.environment.get('demoFileContent') || 'foto-de-prueba').length));
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 201', () => pm.response.to.have.status(201));
+      const data = pm.response.json().data;
+      pm.environment.set('mediaId', data.media.id);
+      pm.environment.set('uploadUrl', data.upload.url);

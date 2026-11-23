@@ -1,0 +1,10 @@
+$kind: collection
+name: '02 Admin'
+description: |-
+  Solo SUPER_ADMIN.
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'

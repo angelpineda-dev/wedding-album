@@ -1,0 +1,10 @@
+$kind: collection
+name: '08 Cierre'
+description: |-
+  Pasos que dejan el evento fuera de servicio. Van al final a propósito.
+order: 9000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'

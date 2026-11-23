@@ -1,0 +1,8 @@
+$kind: collection
+name: '05 QR'
+order: 6000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{clientToken}}'

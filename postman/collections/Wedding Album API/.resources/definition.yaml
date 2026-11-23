@@ -1,0 +1,15 @@
+$kind: collection
+name: 'Wedding Album API'
+description: |-
+  API REST del álbum de bodas. Ejecuta las carpetas en orden (00 → 07): cada paso guarda en el
+  entorno los ids y tokens que usan los siguientes (adminToken, clientToken, eventId, eventCode,
+  guestToken, mediaId, uploadUrl, galleryCursor).
+
+  Paso manual: tras "Registrar cliente" la API imprime el magic link en la consola del servidor
+  (en desarrollo no hay proveedor de correo). Copia el valor de `token=` del enlace a la variable
+  `magicToken` del entorno y sigue con "Verificar magic link".
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

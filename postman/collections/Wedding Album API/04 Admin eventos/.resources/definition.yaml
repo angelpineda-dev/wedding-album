@@ -1,0 +1,10 @@
+$kind: collection
+name: '04 Admin eventos'
+description: |-
+  Solo SUPER_ADMIN.
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'

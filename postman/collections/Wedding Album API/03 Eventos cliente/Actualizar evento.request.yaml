@@ -1,0 +1,20 @@
+$kind: http-request
+description: |-
+  Cualquier subconjunto de los campos de creación. Se valida contra lo ya guardado.
+method: PATCH
+url: '{{baseUrl}}/events/{{eventId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "galleryPollSeconds": 60
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));

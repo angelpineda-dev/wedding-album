@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  El staff (SUPER_ADMIN, ADMIN) necesita contraseña confirmada de 12+ caracteres. Un ADMIN solo puede crear clientes.
+method: POST
+url: '{{baseUrl}}/auth/register'
+order: 2500
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "email": "moderadora@example.com",
+      "name": "Moderadora",
+      "role": "ADMIN",
+      "password": "una-contraseña-segura",
+      "confirmedPassword": "una-contraseña-segura"
+    }
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('201 o 409 (ya existe)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));

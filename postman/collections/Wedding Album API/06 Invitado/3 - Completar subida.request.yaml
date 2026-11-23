@@ -1,0 +1,10 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/guest/media/{{mediaId}}/complete'
+order: 8000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      pm.test('queda en moderación', () => pm.expect(pm.response.json().data.status).to.eql('PENDING'));

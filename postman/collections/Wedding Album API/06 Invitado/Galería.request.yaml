@@ -1,0 +1,18 @@
+$kind: http-request
+description: |-
+  Solo PUBLISHED, más nuevo primero. `before=<nextCursor>` para páginas anteriores; `since=<latestCursor>` para el polling cada `pollSeconds`.
+method: GET
+url: '{{baseUrl}}/public/events/{{eventCode}}/gallery?limit=30'
+queryParams:
+  - key: limit
+    value: '30'
+order: 2000
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      const data = pm.response.json().data;
+      if (data.latestCursor) pm.environment.set('galleryCursor', data.latestCursor);

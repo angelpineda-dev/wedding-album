@@ -1,0 +1,41 @@
+$kind: http-request
+description: |-
+  Nace PENDING hasta que el superadmin lo habilite. Respeta la cuota del cliente (409 si se agotó). Guarda `eventId` y `eventCode`.
+method: POST
+url: '{{baseUrl}}/events'
+order: 1000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "name": "Ana & Luis",
+      "opensAt": "{{opensAt}}",
+      "closesAt": "{{closesAt}}",
+      "timezone": "America/Mexico_City",
+      "venueName": "Hacienda San Gabriel",
+      "geofenceEnabled": true,
+      "latitude": 20.6597,
+      "longitude": -103.3496,
+      "radiusMeters": 5000,
+      "moderationRequired": true,
+      "galleryPollSeconds": 120
+    }
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      // Ventana abierta desde hace 1 h hasta dentro de 5 h, para poder subir fotos ya.
+      const h = 3600 * 1000;
+      pm.variables.set('opensAt', new Date(Date.now() - h).toISOString());
+      pm.variables.set('closesAt', new Date(Date.now() + 5 * h).toISOString());
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 201', () => pm.response.to.have.status(201));
+      const data = pm.response.json().data;
+      pm.environment.set('eventId', data.id);
+      pm.environment.set('eventCode', data.publicCode);
+      pm.test('nace PENDING', () => pm.expect(data.status).to.eql('PENDING'));

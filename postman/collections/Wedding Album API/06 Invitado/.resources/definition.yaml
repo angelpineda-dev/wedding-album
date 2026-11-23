@@ -1,0 +1,10 @@
+$kind: collection
+name: '06 Invitado'
+description: |-
+  Flujo del invitado: galería pública (sin token), unirse con su nombre, presencia y subida en 3 pasos.
+order: 7000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{guestToken}}'

@@ -1,0 +1,10 @@
+$kind: collection
+name: '03 Eventos cliente'
+description: |-
+  Eventos propios del cliente (rol USER).
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{clientToken}}'

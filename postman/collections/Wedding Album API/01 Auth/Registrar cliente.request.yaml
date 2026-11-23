@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  Un cliente (rol USER) se crea sin contraseña y recibe un magic link. En desarrollo el enlace sale en la consola del servidor: copia su `token` a la variable `magicToken`. 409 si el correo ya existe.
+method: POST
+url: '{{baseUrl}}/auth/register'
+order: 2000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{clientEmail}}",
+      "name": "Ana",
+      "lastName": "Martínez",
+      "eventQuota": 2
+    }
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('201 o 409 (ya existe)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));
+      if (pm.response.code === 201) pm.environment.set('clientId', String(pm.response.json().data.id));

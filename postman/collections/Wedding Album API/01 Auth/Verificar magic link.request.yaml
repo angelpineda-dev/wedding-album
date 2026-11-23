@@ -1,0 +1,25 @@
+$kind: http-request
+description: |-
+  Un solo uso, caduca en 15 min. Con `X-Client-Type: mobile` el refresh token viene en el body (sin el header va en una cookie httpOnly). Guarda `clientToken` y `refreshToken`.
+method: POST
+url: '{{baseUrl}}/auth/magic-link/verify'
+order: 4000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+  - key: X-Client-Type
+    value: 'mobile'
+body:
+  type: json
+  content: |-
+    {
+      "token": "{{magicToken}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));
+      const data = pm.response.json().data;
+      pm.environment.set('clientToken', data.accessToken);
+      pm.environment.set('refreshToken', data.refreshToken);

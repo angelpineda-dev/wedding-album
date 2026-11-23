@@ -1,0 +1,87 @@
+name: Local
+values:
+  - key: host
+    value: 'http://localhost:3000'
+    enabled: true
+    type: default
+    description: 'Servidor sin /api (health).'
+  - key: baseUrl
+    value: 'http://localhost:3000/api'
+    enabled: true
+    type: default
+    description: 'Base de la API.'
+  - key: adminEmail
+    value: 'admin@example.com'
+    enabled: true
+    type: default
+    description: 'Superadmin creado con npm run seed:superadmin.'
+  - key: adminPassword
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Contraseña del superadmin (no se versiona).'
+  - key: clientEmail
+    value: 'novios@example.com'
+    enabled: true
+    type: default
+    description: 'Correo del cliente de prueba.'
+  - key: magicToken
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Pegar el token del magic link impreso en la consola del servidor.'
+  - key: demoFileContent
+    value: 'foto-de-prueba'
+    enabled: true
+    type: default
+    description: 'Contenido del archivo de demo que se sube en el paso 2.'
+  - key: adminToken
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Lo rellena la colección.'
+  - key: clientToken
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Lo rellena la colección.'
+  - key: refreshToken
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Lo rellena la colección.'
+  - key: guestToken
+    value: ''
+    enabled: true
+    type: secret
+    description: 'Lo rellena la colección.'
+  - key: clientId
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'
+  - key: eventId
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'
+  - key: eventCode
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'
+  - key: mediaId
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'
+  - key: uploadUrl
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'
+  - key: galleryCursor
+    value: ''
+    enabled: true
+    type: default
+    description: 'Lo rellena la colección.'

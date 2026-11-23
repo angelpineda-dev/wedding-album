@@ -1,0 +1,11 @@
+$kind: http-request
+description: |-
+  El QR y los tokens de invitado dejan de funcionar (401/404).
+method: POST
+url: '{{baseUrl}}/admin/events/{{eventId}}/suspend'
+order: 1000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));

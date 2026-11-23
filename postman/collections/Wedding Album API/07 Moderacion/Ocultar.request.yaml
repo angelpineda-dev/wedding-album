@@ -1,0 +1,9 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/events/{{eventId}}/media/{{mediaId}}/hide'
+order: 4000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));

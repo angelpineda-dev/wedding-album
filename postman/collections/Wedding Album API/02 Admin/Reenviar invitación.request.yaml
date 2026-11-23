@@ -1,0 +1,9 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/admin/clients/{{clientId}}/resend'
+order: 3000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 202', () => pm.response.to.have.status(202));

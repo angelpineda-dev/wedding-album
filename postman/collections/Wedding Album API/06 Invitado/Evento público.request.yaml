@@ -1,0 +1,13 @@
+$kind: http-request
+description: |-
+  Lo que abre el QR. No expone coordenadas del lugar.
+method: GET
+url: '{{baseUrl}}/public/events/{{eventCode}}'
+order: 1000
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));

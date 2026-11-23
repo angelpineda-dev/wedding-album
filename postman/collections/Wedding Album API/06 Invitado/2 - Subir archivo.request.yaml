@@ -1,0 +1,19 @@
+$kind: http-request
+description: |-
+  PUT directo al bucket, SIN Authorization (la firma va en la URL). Para una foto real usa body "binary" y ajusta `sizeBytes` en el paso 1 al tamaño exacto del archivo.
+method: PUT
+url: '{{uploadUrl}}'
+order: 7000
+headers:
+  - key: Content-Type
+    value: 'image/jpeg'
+body:
+  type: text
+  content: '{{demoFileContent}}'
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 200', () => pm.response.to.have.status(200));

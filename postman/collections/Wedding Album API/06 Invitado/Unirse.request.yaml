@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  Al pulsar "Subir". Guarda `guestToken`. 409 si el evento cerró o se llenó el cupo.
+method: POST
+url: '{{baseUrl}}/public/events/{{eventCode}}/guests'
+order: 3000
+headers:
+  - key: Content-Type
+    value: 'application/json'
+body:
+  type: json
+  content: |-
+    {
+      "name": "Sofía Ramírez"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('status 201', () => pm.response.to.have.status(201));
+      pm.environment.set('guestToken', pm.response.json().data.token);
