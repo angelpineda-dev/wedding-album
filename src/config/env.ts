@@ -54,6 +54,10 @@ const envSchema = z.object({
     UPLOAD_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(10),
     UPLOAD_RATE_LIMIT_MAX: positiveInt.default(60),
 
+    // In-process housekeeping (abandoned uploads, spent links, expired sessions). 0 = off,
+    // e.g. when `npm run cleanup` runs from an external cron instead.
+    CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(60),
+
     // Public (QR) endpoints, per IP. Guests at one venue often share an IP.
     PUBLIC_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(1),
     PUBLIC_RATE_LIMIT_MAX: positiveInt.default(120),

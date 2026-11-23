@@ -10,6 +10,7 @@ import { EVENT_STATUS, GUEST_TOLERANCE, MAX_WINDOW_HOURS, type EventStatus } fro
 import { isUniqueViolation } from '../utils/dbErrors.ts';
 import { MEDIA_STATUS } from '../core/const/media.ts';
 import { publicEventUrl } from './qrService.ts';
+import { totalStorageBytes } from './usageService.ts';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -108,13 +109,18 @@ const ownEventsWithCounts = (ownerId: number) =>
         .include('media', (media) => media.combine({
             published: media.where({ status: MEDIA_STATUS.PUBLISHED }).count(),
             pending: media.where({ status: MEDIA_STATUS.PENDING }).count(),
+            storedBytes: media.where((m) => m.status.neq(MEDIA_STATUS.UPLOADING)).sum('sizeBytes'),
         }));
 
-const withCounts = ({ guests, media, ...event }: EventRow & { guests: number; media: { published: number; pending: number } }) => ({
+const withCounts = ({ guests, media, ...event }: EventRow & {
+    guests: number;
+    media: { published: number; pending: number; storedBytes: number | null };
+}) => ({
     ...toEventResponse(event),
     guestCount: guests,
     publishedCount: media.published,
     pendingCount: media.pending,
+    storageBytes: media.storedBytes ?? 0,
 });
 
 export async function listOwnEvents(ownerId: number) {
@@ -223,9 +229,9 @@ export async function suspendEvent(id: string) {
     return toEventResponse(updated!);
 }
 
-/** Numbers for the admin dashboard. Storage usage is added with media (phase 7). */
+/** Numbers for the admin dashboard. */
 export async function getStats() {
-    const [{ activeClients }, { pendingEvents }, { enabledEvents }] = await Promise.all([
+    const [{ activeClients }, { pendingEvents }, { enabledEvents }, storageBytes] = await Promise.all([
         db.orm.public.User
             .where((u) => and(u.role.eq(ROLE.USER), u.status.eq(USER_STATUS.ACTIVE), u.deletedAt.isNull()))
             .aggregate((aggregate) => ({ activeClients: aggregate.count() })),
@@ -235,7 +241,8 @@ export async function getStats() {
         db.orm.public.Event
             .where({ status: EVENT_STATUS.ENABLED })
             .aggregate((aggregate) => ({ enabledEvents: aggregate.count() })),
+        totalStorageBytes(),
     ]);
 
-    return { activeClients, pendingEvents, enabledEvents };
+    return { activeClients, pendingEvents, enabledEvents, storageBytes };
 }

@@ -15,7 +15,8 @@
     "db:migrate": "prisma db migrate --yes",
     "db:status": "prisma migration status",
     "contract:emit": "prisma contract emit",
-    "storage:init": "node scripts/initStorage.ts"
+    "storage:init": "node scripts/initStorage.ts",
+    "cleanup": "node scripts/cleanup.ts"
   },
   "keywords": [],
   "author": "",

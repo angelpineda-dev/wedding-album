@@ -99,6 +99,6 @@ describe('GET /api/admin/stats', () => {
         const res = await request(app).get('/api/admin/stats').set('Authorization', admin);
 
         expect(res.status).toBe(200);
-        expect(res.body.data).toEqual({ activeClients: 2, pendingEvents: 1, enabledEvents: 1 });
+        expect(res.body.data).toEqual({ activeClients: 2, pendingEvents: 1, enabledEvents: 1, storageBytes: 0 });
     });
 });

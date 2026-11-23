@@ -6,6 +6,7 @@ import { ROLE } from '../core/const/roles.ts';
 import { USER_STATUS, type UserStatus } from '../core/const/userStatus.ts';
 import { revokeAllSessions } from './sessionService.ts';
 import { sendMagicLink } from './magicLinkService.ts';
+import { storageBytesByOwner } from './usageService.ts';
 
 const CLIENT_FIELDS = ['id', 'email', 'name', 'lastName', 'status', 'eventQuota', 'createdAt'] as const;
 
@@ -13,9 +14,22 @@ const CLIENT_FIELDS = ['id', 'email', 'name', 'lastName', 'status', 'eventQuota'
 const clients = () =>
     db.orm.public.User.where((u) => and(u.role.eq(ROLE.USER), u.deletedAt.isNull()));
 
+/** Clients with how many events they created and how many bytes their events store. */
 export async function listClients(status?: UserStatus) {
     const query = status === undefined ? clients() : clients().where({ status });
-    return query.select(...CLIENT_FIELDS).orderBy((u) => u.createdAt.desc()).all();
+    const [rows, storage] = await Promise.all([
+        query.select(...CLIENT_FIELDS)
+            .include('events', (events) => events.count())
+            .orderBy((u) => u.createdAt.desc())
+            .all(),
+        storageBytesByOwner(),
+    ]);
+
+    return rows.map(({ events, ...client }) => ({
+        ...client,
+        eventCount: events,
+        storageBytes: storage.get(client.id) ?? 0,
+    }));
 }
 
 async function findClient(id: number) {
