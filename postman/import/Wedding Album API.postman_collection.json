@@ -1,0 +1,1238 @@
+{
+  "info": {
+    "_postman_id": "963de7c2-e317-463c-8c9f-eea52f4a9d2e",
+    "name": "Wedding Album API",
+    "description": "API REST del álbum de bodas. Ejecuta las carpetas en orden (00 → 07): cada paso guarda en el\nentorno los ids y tokens que usan los siguientes (adminToken, clientToken, eventId, eventCode,\nguestToken, mediaId, uploadUrl, galleryCursor).\n\nPaso manual: tras \"Registrar cliente\" la API imprime el magic link en la consola del servidor\n(en desarrollo no hay proveedor de correo). Copia el valor de `token=` del enlace a la variable\n`magicToken` del entorno y sigue con \"Verificar magic link\".",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Health",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Login superadmin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Crea antes el superadmin con `npm run seed:superadmin`. Guarda `adminToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('adminToken', pm.response.json().data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Un cliente (rol USER) se crea sin contraseña y recibe un magic link. En desarrollo el enlace sale en la consola del servidor: copia su `token` a la variable `magicToken`. 409 si el correo ya existe.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clientEmail}}\",\n  \"name\": \"Ana\",\n  \"lastName\": \"Martínez\",\n  \"eventQuota\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 o 409 (ya existe)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) pm.environment.set('clientId', String(pm.response.json().data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "El staff (SUPER_ADMIN, ADMIN) necesita contraseña confirmada de 12+ caracteres. Un ADMIN solo puede crear clientes.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"moderadora@example.com\",\n  \"name\": \"Moderadora\",\n  \"role\": \"ADMIN\",\n  \"password\": \"una-contraseña-segura\",\n  \"confirmedPassword\": \"una-contraseña-segura\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 o 409 (ya existe)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedir magic link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/magic-link",
+            "description": "Siempre responde 202 (no revela si el correo existe). Solo envía enlace a clientes activos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clientEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar magic link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Type",
+                "value": "mobile"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/magic-link/verify",
+            "description": "Un solo uso, caduca en 15 min. Con `X-Client-Type: mobile` el refresh token viene en el body (sin el header va en una cookie httpOnly). Guarda `clientToken` y `refreshToken`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{magicToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.environment.set('clientToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Type",
+                "value": "mobile"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Rota el refresh token: el anterior queda revocado. Reusar uno revocado cierra todas las sesiones del usuario.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.environment.set('clientToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mi usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/user/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clientToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Login del staff con contraseña, alta de clientes, magic link, refresh y logout.",
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "02 Admin",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/clients?status=ACTIVE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "// Si el cliente ya existía (409 al registrar), toma su id de aquí.",
+                  "const me = pm.response.json().data.find(c => c.email === pm.environment.get('clientEmail'));",
+                  "if (me) pm.environment.set('clientId', String(me.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/clients/{{clientId}}",
+            "description": "Cambia `eventQuota` y/o `status` (ACTIVE | SUSPENDED). Suspender revoca todas sus sesiones.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventQuota\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reenviar invitación",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/admin/clients/{{clientId}}/resend"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estadísticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Solo SUPER_ADMIN.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "03 Eventos cliente",
+      "item": [
+        {
+          "name": "Crear evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/events",
+            "description": "Nace PENDING hasta que el superadmin lo habilite. Respeta la cuota del cliente (409 si se agotó). Guarda `eventId` y `eventCode`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana & Luis\",\n  \"opensAt\": \"{{opensAt}}\",\n  \"closesAt\": \"{{closesAt}}\",\n  \"timezone\": \"America/Mexico_City\",\n  \"venueName\": \"Hacienda San Gabriel\",\n  \"geofenceEnabled\": true,\n  \"latitude\": 20.6597,\n  \"longitude\": -103.3496,\n  \"radiusMeters\": 5000,\n  \"moderationRequired\": true,\n  \"galleryPollSeconds\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Ventana abierta desde hace 1 h hasta dentro de 5 h, para poder subir fotos ya.",
+                  "const h = 3600 * 1000;",
+                  "pm.variables.set('opensAt', new Date(Date.now() - h).toISOString());",
+                  "pm.variables.set('closesAt', new Date(Date.now() + 5 * h).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.environment.set('eventId', data.id);",
+                  "pm.environment.set('eventCode', data.publicCode);",
+                  "pm.test('nace PENDING', () => pm.expect(data.status).to.eql('PENDING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mis eventos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver evento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar evento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/events/{{eventId}}",
+            "description": "Cualquier subconjunto de los campos de creación. Se valida contra lo ya guardado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"galleryPollSeconds\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Eventos propios del cliente (rol USER).",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{clientToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "04 Admin eventos",
+      "item": [
+        {
+          "name": "Eventos por habilitar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/events?status=PENDING"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Habilitar evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/events/{{eventId}}/enable",
+            "description": "`packageMax` múltiplo de 25. Cupo de invitados = packageMax + 5.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"packageMax\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('cupo = paquete + 5', () => pm.expect(pm.response.json().data.guestLimit).to.eql(105));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Solo SUPER_ADMIN.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "05 QR",
+      "item": [
+        {
+          "name": "QR PNG",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/qr.png",
+            "description": "Solo para eventos habilitados (409 antes). En Postman usa \"Send and Download\"."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('png', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('image/png'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "QR PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/qr.pdf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('pdf', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Regenerar QR",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/qr/rotate",
+            "description": "Nuevo código; el anterior deja de funcionar. Actualiza `eventCode`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('eventCode', pm.response.json().data.publicCode);"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{clientToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "06 Invitado",
+      "item": [
+        {
+          "name": "Evento público",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/public/events/{{eventCode}}",
+            "description": "Lo que abre el QR. No expone coordenadas del lugar.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Galería",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/public/events/{{eventCode}}/gallery?limit=30",
+            "description": "Solo PUBLISHED, más nuevo primero. `before=<nextCursor>` para páginas anteriores; `since=<latestCursor>` para el polling cada `pollSeconds`.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "if (data.latestCursor) pm.environment.set('galleryCursor', data.latestCursor);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unirse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/public/events/{{eventCode}}/guests",
+            "description": "Al pulsar \"Subir\". Guarda `guestToken`. 409 si el evento cerró o se llenó el cupo.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sofía Ramírez\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('guestToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Yo (invitado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guest/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Presencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guest/presence",
+            "description": "La posición no se guarda. Prueba con 20.2963, -103.1906 (≈43 km) para ver `inside: false`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 20.66,\n  \"longitude\": -103.35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('puede subir', () => pm.expect(pm.response.json().data.canUpload).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1 - Pedir URL de subida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guest/media",
+            "description": "Devuelve una URL PUT prefirmada (10 min). Content-Type y Content-Length van firmados.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"PHOTO\",\n  \"mimeType\": \"image/jpeg\",\n  \"sizeBytes\": {{demoSize}},\n  \"latitude\": 20.66,\n  \"longitude\": -103.35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Archivo de demo: el texto de 'Subir archivo'. El tamaño firmado debe coincidir con lo que se envía.",
+                  "pm.variables.set('demoSize', String(new TextEncoder().encode(pm.environment.get('demoFileContent') || 'foto-de-prueba').length));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.environment.set('mediaId', data.media.id);",
+                  "pm.environment.set('uploadUrl', data.upload.url);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2 - Subir archivo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "image/jpeg"
+              }
+            ],
+            "url": "{{uploadUrl}}",
+            "description": "PUT directo al bucket, SIN Authorization (la firma va en la URL). Para una foto real usa body \"binary\" y ajusta `sizeBytes` en el paso 1 al tamaño exacto del archivo.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{{demoFileContent}}",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3 - Completar subida",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/guest/media/{{mediaId}}/complete"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('queda en moderación', () => pm.expect(pm.response.json().data.status).to.eql('PENDING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mis subidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guest/media/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Flujo del invitado: galería pública (sin token), unirse con su nombre, presencia y subida en 3 pasos.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{guestToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "07 Moderacion",
+      "item": [
+        {
+          "name": "Pendientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/media?status=PENDING"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aprobar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/media/{{mediaId}}/approve"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('publicada', () => pm.expect(pm.response.json().data.status).to.eql('PUBLISHED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Galería (polling)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/public/events/{{eventCode}}/gallery",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('aparece la foto aprobada', () => pm.expect(pm.response.json().data.items.map(i => i.id)).to.include(pm.environment.get('mediaId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ocultar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/media/{{mediaId}}/hide"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aprobar todas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/media/approve-all"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cola global (superadmin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/moderation",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Dueño del evento o SUPER_ADMIN (cambia el token a {{adminToken}} para probar como superadmin).",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{clientToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "08 Cierre",
+      "item": [
+        {
+          "name": "Suspender evento",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/admin/events/{{eventId}}/suspend",
+            "description": "El QR y los tokens de invitado dejan de funcionar (401/404)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invitado tras suspender",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guest/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{guestToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout todas las sesiones",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/logout-all",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clientToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Pasos que dejan el evento fuera de servicio. Van al final a propósito.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  }
+}

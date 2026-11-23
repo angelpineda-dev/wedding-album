@@ -16,7 +16,8 @@
     "db:status": "prisma migration status",
     "contract:emit": "prisma contract emit",
     "storage:init": "node scripts/initStorage.ts",
-    "cleanup": "node scripts/cleanup.ts"
+    "cleanup": "node scripts/cleanup.ts",
+    "postman:export": "node scripts/exportPostman.mjs"
   },
   "keywords": [],
   "author": "",

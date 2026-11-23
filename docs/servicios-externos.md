@@ -9,7 +9,8 @@ Qué falta configurar fuera del código para correr la API en local y en producc
 ├── docker-compose.yml        ← Postgres + MinIO locales
 ├── docs/servicios-externos.md
 └── postman/
-    ├── collections/Wedding Album API/   ← colección v3 (YAML)
+    ├── collections/Wedding Album API/   ← colección v3 (YAML, fuente)
+    ├── import/                          ← JSON v2.1 para importar en la app (generado)
     └── environments/Local.environment.yaml
 ```
 
@@ -221,7 +222,19 @@ La colección está en `postman/collections/Wedding Album API/` (formato v3 de P
    postman collection run "postman/collections/Wedding Album API" -e postman/environments/Local.environment.yaml --env-var adminPassword=<tu contraseña> --env-var magicToken=<token>
    ```
 
-**Desde la app de Postman:** abre la carpeta del repo como workspace local (Git) o importa la colección, selecciona el entorno **Local**, rellena `adminPassword`, y ejecuta las peticiones en orden. Tras "Registrar cliente" pega el token del magic link en `magicToken`.
+**Desde la app de Postman (importar):**
+
+1. **Import** → arrastra los dos archivos de `postman/import/`:
+   - `Wedding Album API.postman_collection.json`
+   - `Local.postman_environment.json`
+2. Arriba a la derecha selecciona el entorno **Local** y rellena `adminPassword` (y `adminEmail` si no es `admin@example.com`).
+3. Ejecuta las peticiones en orden, o la colección entera con **Run collection**. Tras "Registrar cliente", pega el token del magic link en `magicToken` y sigue.
+
+Los JSON de `postman/import/` se generan desde los YAML: después de editar la colección, regenéralos con:
+
+```bash
+npm run postman:export
+```
 
 Notas:
 - La carpeta **08 Cierre** suspende el evento y cierra las sesiones del cliente; va al final a propósito.
