@@ -1,6 +1,7 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { registerUser, login as loginUser, refresh as refreshTokens } from '../services/authService.ts';
+import { canAssignRole, createUser, login as loginUser, refresh as refreshTokens } from '../services/authService.ts';
+import { ROLE } from '../core/const/roles.ts';
 import { revokeAllSessions, revokeSession, type SessionMeta } from '../services/sessionService.ts';
 import { clearRefreshToken, deliverRefreshToken, readRefreshToken } from '../utils/refreshTransport.ts';
 import { env } from '../config/env.ts';
@@ -32,20 +33,29 @@ const sendTokens = (req: Request, res: Response, { accessToken, refreshToken, us
         },
     });
 
-const register = async (req: Request, res: Response, next: NextFunction) => {
-    try {
+// Strict: unknown keys are rejected (400) instead of silently reaching the ORM.
+const registerSchema = z.strictObject({
+    email: z.email().max(254),
+    name: z.string().trim().min(1).max(100),
+    lastName: z.string().trim().min(1).max(100).optional(),
+    password: z.string().min(8).max(128),
+    confirmedPassword: z.string(),
+    role: z.enum(ROLE).default(ROLE.USER),
+}).refine((data) => data.password === data.confirmedPassword, {
+    message: authMessages.CONFIRM_PASSWORD,
+    path: ['confirmedPassword'],
+});
 
-        const data = req.body;
+const register = async (req: Request, res: Response) => {
+    const { email, name, lastName, password, role } = registerSchema.parse(req.body);
 
-        await registerUser(data);
-
-        return res.status(201).send({
-            message: 'User registered successfully'
-        });
-
-    } catch (error) {
-        next(error);
+    if (!canAssignRole(req.user!.role, role)) {
+        throw new AppError(authMessages.ROLE_NOT_ALLOWED, 403);
     }
+
+    const user = await createUser({ email, name, lastName: lastName ?? null, password, role });
+
+    return res.status(201).json({ success: true, data: user });
 };
 
 const login = async (req: Request, res: Response) => {

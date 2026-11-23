@@ -29,6 +29,12 @@ const envSchema = z.object({
     AUTH_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(15),
     AUTH_RATE_LIMIT_MAX: positiveInt.default(20),
 
+    // Comma-separated browser origins allowed to call the API with credentials (refresh cookie).
+    // Empty = no cross-origin access. Each entry must be a bare origin, e.g. https://app.example.com
+    CORS_ORIGINS: z.string().default('')
+        .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean))
+        .pipe(z.array(z.url().refine((origin) => new URL(origin).origin === origin, 'must be a bare origin (scheme://host[:port])'))),
+
     // Number of reverse proxies in front of the app (0 = none). Needed for real client IPs.
     TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

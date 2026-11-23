@@ -3,6 +3,7 @@ import AppError from '../errors/AppError.ts';
 import { authMessages } from '../core/userMessages/auth.ts';
 import { verifyAccessToken } from '../services/tokenService.ts';
 import { db } from '../prisma/db.ts';
+import type { Role } from '../core/const/roles.ts';
 
 /**
  * Requires `Authorization: Bearer <accessToken>`.
@@ -32,6 +33,24 @@ async function authenticate(req: Request, _res: Response, next: NextFunction) {
 }
 
 /**
+ * Allows the request only if the authenticated user has one of `roles`.
+ * Must run after `authenticate`.
+ */
+function requireRole(...roles: Role[]) {
+    return (req: Request, _res: Response, next: NextFunction) => {
+        if (!req.user) {
+            throw new AppError(authMessages.UNAUTHORIZED, 401);
+        }
+
+        if (!roles.includes(req.user.role)) {
+            throw new AppError(authMessages.FORBIDDEN, 403);
+        }
+
+        next();
+    };
+}
+
+/**
  * CSRF defense in depth for cookie-authenticated endpoints: a cross-site HTML form
  * cannot send `application/json`, and a cross-origin fetch with it triggers a CORS preflight.
  */
@@ -43,4 +62,4 @@ function requireJson(req: Request, _res: Response, next: NextFunction) {
     next();
 }
 
-export { authenticate, requireJson };
+export { authenticate, requireRole, requireJson };

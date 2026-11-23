@@ -1,41 +1,51 @@
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import { db } from '../prisma/db.ts'
-import type { User } from "../types/auth.ts"
+import type { NewUser } from "../types/auth.ts"
 import AppError from '../errors/AppError.ts';
 import { authMessages } from '../core/userMessages/auth.ts';
 import { env } from '../config/env.ts';
+import { ROLE, type Role } from '../core/const/roles.ts';
 import { signAccessToken } from './tokenService.ts';
 import { createSession, rotateSession, ROTATION, type SessionMeta } from './sessionService.ts';
 
-const registerUser = async (data: User) => {
-
-    const { password, confirmed_password, ...newData } = data;
-
-    const isPasswordMatch = password === confirmed_password;
-
-    if (!isPasswordMatch || !password || !confirmed_password) {
-        throw new AppError(authMessages.CONFIRM_PASSWORD);
+/** Whether a user with role `actor` may create a user with role `target`. */
+const canAssignRole = (actor: Role, target: Role): boolean => {
+    switch (actor) {
+        case ROLE.SUPER_ADMIN:
+            return true;
+        case ROLE.ADMIN:
+            return target === ROLE.USER;
+        case ROLE.USER:
+            return false;
+        default: {
+            const unhandled: never = actor;
+            throw new Error(`Unhandled role: ${unhandled}`);
+        }
     }
+};
+
+const UNIQUE_VIOLATION = '23505';
+
+/** Postgres driver errors carry the SQLSTATE in `sqlState` (Prisma's SqlQueryError is not exported). */
+const isUniqueViolation = (error: unknown): boolean =>
+    typeof error === 'object' && error !== null && 'sqlState' in error && error.sqlState === UNIQUE_VIOLATION;
+
+/** Creates a user with a hashed password. Throws 409 if the email is already registered. */
+const createUser = async ({ password, ...data }: NewUser) => {
+    const hashedPassword = await bcrypt.hash(password, env.BCRYPT_COST);
 
     try {
-        const hashedPassword = await bcrypt.hash(password, env.BCRYPT_COST);
-
-        const user = await db.orm.public.User.select('id').create({
-            ...newData,
-            password: hashedPassword
-        });
-
-        if (!user) {
-            throw new AppError(authMessages.ERROR_SAVING_USER, 500)
-        }
-
-        return user;
+        return await db.orm.public.User
+            .select('id', 'email', 'name', 'lastName', 'role', 'createdAt')
+            .create({ ...data, password: hashedPassword });
     } catch (error) {
-        throw new AppError(authMessages.ERROR_SAVING_USER, 500)
+        if (isUniqueViolation(error)) {
+            throw new AppError(authMessages.EMAIL_TAKEN, 409);
+        }
+        throw error;
     }
-
-}
+};
 
 // Hash compared when the user does not exist, is deleted or is locked,
 // so every failed login costs the same time (prevents user enumeration by timing).
@@ -108,7 +118,8 @@ const refresh = async (refreshToken: string, meta: SessionMeta) => {
 }
 
 export {
-    registerUser,
+    canAssignRole,
+    createUser,
     login,
     refresh
 }
