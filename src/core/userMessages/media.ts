@@ -7,5 +7,6 @@ export const mediaMessages = {
     TOO_MANY_OPEN: 'Finish your current uploads before starting more.',
     NOT_FOUND: 'File not found.',
     NOT_UPLOADED: 'The file has not been uploaded yet.',
+    NOT_MODERATABLE: 'This file is still uploading.',
     MISMATCH: 'The uploaded file does not match what was announced.',
 } as const;

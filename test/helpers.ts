@@ -6,6 +6,7 @@ import { mailService } from '../src/services/mailService.ts';
 import { createEvent } from '../src/services/eventService.ts';
 import { ROLE, type Role } from '../src/core/const/roles.ts';
 import { EVENT_STATUS } from '../src/core/const/event.ts';
+import { MEDIA_KIND, MEDIA_STATUS, type MediaKind, type MediaStatus } from '../src/core/const/media.ts';
 import { assertTestDatabase } from './testEnv.ts';
 
 export const STAFF_PASSWORD = 'correct-horse-battery';
@@ -77,4 +78,28 @@ export async function createEnabledEvent({ packageMax = 100, open = true, geofen
     });
     const event = (await db.orm.public.Event.where({ id: created.id }).update({ status: EVENT_STATUS.ENABLED, packageMax, enabledAt: new Date() }))!;
     return { owner, event };
+}
+
+let mediaCounter = 0;
+
+/** A media row straight in the database (no file in storage; galleries only sign URLs). */
+export async function addMedia(
+    eventId: string,
+    guestId: string,
+    { status, kind = MEDIA_KIND.PHOTO, at = new Date() }: { status: MediaStatus; kind?: MediaKind; at?: Date },
+) {
+    mediaCounter += 1;
+    return db.orm.public.Media.create({
+        eventId,
+        guestId,
+        kind,
+        status,
+        storageKey: `events/${eventId}/seed-${mediaCounter}.jpg`,
+        mimeType: kind === MEDIA_KIND.PHOTO ? 'image/jpeg' : 'video/mp4',
+        sizeBytes: 1000,
+        createdAt: at,
+        uploadedAt: status === MEDIA_STATUS.UPLOADING ? null : at,
+        publishedAt: status === MEDIA_STATUS.PUBLISHED ? at : null,
+        moderatedById: null,
+    });
 }

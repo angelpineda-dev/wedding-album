@@ -8,6 +8,7 @@ import { ROLE } from '../core/const/roles.ts';
 import { USER_STATUS } from '../core/const/userStatus.ts';
 import { EVENT_STATUS, GUEST_TOLERANCE, MAX_WINDOW_HOURS, type EventStatus } from '../core/const/event.ts';
 import { isUniqueViolation } from '../utils/dbErrors.ts';
+import { MEDIA_STATUS } from '../core/const/media.ts';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -98,13 +99,20 @@ export async function createEvent(ownerId: number, settings: EventSettings) {
     }
 }
 
-/** Own events with how many guests have joined each. */
+/** Own events with how many guests joined and how many files are published / awaiting moderation. */
 const ownEventsWithCounts = (ownerId: number) =>
-    db.orm.public.Event.where({ ownerId }).include('guests', (guests) => guests.count());
+    db.orm.public.Event.where({ ownerId })
+        .include('guests', (guests) => guests.count())
+        .include('media', (media) => media.combine({
+            published: media.where({ status: MEDIA_STATUS.PUBLISHED }).count(),
+            pending: media.where({ status: MEDIA_STATUS.PENDING }).count(),
+        }));
 
-const withCounts = ({ guests, ...event }: EventRow & { guests: number }) => ({
+const withCounts = ({ guests, media, ...event }: EventRow & { guests: number; media: { published: number; pending: number } }) => ({
     ...toEventResponse(event),
     guestCount: guests,
+    publishedCount: media.published,
+    pendingCount: media.pending,
 });
 
 export async function listOwnEvents(ownerId: number) {

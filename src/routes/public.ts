@@ -3,7 +3,7 @@ import { rateLimit } from 'express-rate-limit';
 import { requireJson } from '../middlewares/authMiddleware.ts';
 import { env } from '../config/env.ts';
 import { authMessages } from '../core/userMessages/auth.ts';
-import { getPublicEvent, postJoin } from '../controllers/guestController.ts';
+import { getGallery, getPublicEvent, postJoin } from '../controllers/guestController.ts';
 
 // Per-IP: a whole wedding may share one Wi-Fi, so the budget is generous but stops code guessing.
 const publicLimiter = rateLimit({
@@ -19,6 +19,7 @@ const router = express.Router();
 router.use(publicLimiter);
 
 router.get('/events/:code', getPublicEvent);
+router.get('/events/:code/gallery', getGallery);
 router.post('/events/:code/guests', requireJson, postJoin);
 
 export default router;

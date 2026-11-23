@@ -2,7 +2,9 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { checkPresence, findPublicEvent, joinEvent, toPublicEvent } from '../services/guestService.ts';
 import { completeUpload, listOwnMedia, startUpload } from '../services/mediaService.ts';
-import { MEDIA_KIND } from '../core/const/media.ts';
+import { MEDIA_KIND, PAGE_SIZE } from '../core/const/media.ts';
+import { listGallery } from '../services/galleryService.ts';
+import { cursorParam } from '../utils/cursor.ts';
 
 const codeParam = z.strictObject({ code: z.string().trim().min(4).max(16) });
 const joinBody = z.strictObject({ name: z.string().trim().min(1).max(80) });
@@ -61,4 +63,27 @@ const getMyMedia = async (req: Request, res: Response) => {
     return res.json({ success: true, data: await listOwnMedia(req.guest!.id) });
 };
 
-export { getPublicEvent, postJoin, getMe, postPresence, postMedia, postCompleteMedia, getMyMedia };
+const galleryQuery = z.strictObject({
+    before: cursorParam.optional(),
+    since: cursorParam.optional(),
+    kind: z.enum(MEDIA_KIND).optional(),
+    limit: z.coerce.number().int().min(1).max(PAGE_SIZE.MAX).default(PAGE_SIZE.DEFAULT),
+}).refine((query) => !(query.before && query.since), { message: 'Use either before or since, not both.' });
+
+/** Public: the gallery the QR opens. No guest token needed: viewing comes before joining. */
+const getGallery = async (req: Request, res: Response) => {
+    const { code } = codeParam.parse(req.params);
+    const { before, since, kind, limit } = galleryQuery.parse(req.query);
+    const event = await findPublicEvent(code);
+
+    const page = await listGallery(event.id, {
+        limit,
+        ...(before && { before }),
+        ...(since && { since }),
+        ...(kind && { kind }),
+    });
+
+    return res.json({ success: true, data: { ...page, pollSeconds: event.galleryPollSeconds } });
+};
+
+export { getGallery, getPublicEvent, postJoin, getMe, postPresence, postMedia, postCompleteMedia, getMyMedia };

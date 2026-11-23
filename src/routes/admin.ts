@@ -10,6 +10,7 @@ import {
     postSuspendEvent,
     resendClientInvitation,
 } from '../controllers/adminController.ts';
+import { getModerationQueue } from '../controllers/moderationController.ts';
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.post('/events/:id/enable', requireJson, postEnableEvent);
 router.post('/events/:id/suspend', postSuspendEvent);
 
 router.get('/stats', getDashboardStats);
+router.get('/moderation', getModerationQueue);
 
 export default router;

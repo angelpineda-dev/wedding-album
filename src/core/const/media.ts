@@ -32,3 +32,6 @@ export const MAX_SIZE_BYTES: Record<MediaKind, number> = {
 
 /** Upload URLs a guest may hold open at once (issued but not completed). */
 export const MAX_OPEN_UPLOADS = 10;
+
+/** Page sizes for gallery and moderation lists. */
+export const PAGE_SIZE = { DEFAULT: 30, MAX: 100 } as const;
