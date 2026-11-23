@@ -1,6 +1,7 @@
-export type Roles = "SUPER_ADMIN" | "ADMIN" | "USER";
+import type { Role } from '../core/const/roles.ts';
 
+/** Authenticated user attached to `req.user` by the `authenticate` middleware. */
 export interface ReqUser {
-    id: string;
-    role: Roles;
+    id: number;
+    role: Role;
 }
