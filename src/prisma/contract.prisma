@@ -5,6 +5,17 @@ enum Role {
   USER
 }
 
+enum EventType {
+  WEDDING
+}
+
+// PENDING until a SUPER_ADMIN confirms the paid package; only ENABLED events accept guests.
+enum EventStatus {
+  PENDING
+  ENABLED
+  SUSPENDED
+}
+
 // Suspended users cannot sign in; suspending also revokes every session.
 enum UserStatus {
   ACTIVE
@@ -31,6 +42,7 @@ model User {
   deletedAt           DateTime?
   sessions            Session[]
   magicLinks          MagicLink[]
+  events              Event[]
   
   @@map("users")          
 }
@@ -65,4 +77,36 @@ model MagicLink {
 
   @@index([userId])
   @@map("magic_links")
+}
+
+// A client's event (album). Guests reach it through `publicCode` (the QR).
+model Event {
+  id                 String      @id @onCreate(uuid())
+  ownerId            Int
+  owner              User        @relation(fields: [ownerId], references: [id])
+  type               EventType   @default(WEDDING)
+  name               String
+  // Upload window; the event's date is the day `opensAt` falls on in `timezone`.
+  opensAt            DateTime
+  closesAt           DateTime
+  timezone           String
+  venueName          String?
+  geofenceEnabled    Boolean     @default(false)
+  latitude           Float?
+  longitude          Float?
+  radiusMeters       Int         @default(5000)
+  moderationRequired Boolean     @default(true)
+  // How often guests' galleries poll for new media.
+  galleryPollSeconds Int         @default(120)
+  status             EventStatus @default(PENDING)
+  // Paid package (multiple of 25 guests); null until enabled. Guest limit = packageMax + 5.
+  packageMax         Int?
+  publicCode         String      @unique
+  enabledAt          DateTime?
+  createdAt          DateTime    @default(now()) @onCreate(now())
+  updatedAt          DateTime    @default(now()) @onUpdate(now())
+
+  @@index([ownerId])
+  @@index([status])
+  @@map("events")
 }

@@ -1,0 +1,247 @@
+[
+  {
+    "id": "table.events",
+    "label": "Create table \"events\"",
+    "summary": "Creates table \"events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"events\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"events\"",
+        "sql": "CREATE TABLE \"public\".\"events\" (\n  \"closesAt\" timestamptz(3) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"enabledAt\" timestamptz(3),\n  \"galleryPollSeconds\" int4 DEFAULT 120 NOT NULL,\n  \"geofenceEnabled\" bool DEFAULT false NOT NULL,\n  \"id\" text NOT NULL,\n  \"latitude\" float8,\n  \"longitude\" float8,\n  \"moderationRequired\" bool DEFAULT true NOT NULL,\n  \"name\" text NOT NULL,\n  \"opensAt\" timestamptz(3) NOT NULL,\n  \"ownerId\" int4 NOT NULL,\n  \"packageMax\" int4,\n  \"publicCode\" text NOT NULL,\n  \"radiusMeters\" int4 DEFAULT 5000 NOT NULL,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"timezone\" text NOT NULL,\n  \"type\" text DEFAULT 'WEDDING' NOT NULL,\n  \"updatedAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"venueName\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"events_status_check_b4fb90c1\" CHECK (\"status\" IN ('PENDING', 'ENABLED', 'SUSPENDED')),\n  CONSTRAINT \"events_type_check_b749e837\" CHECK (\"type\" IN ('WEDDING'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"events\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"events\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"events\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.events.events_publicCode_key",
+    "label": "Add unique constraint on \"events\" (publicCode)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "events_publicCode_key",
+        "table": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"events_publicCode_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "events_publicCode_key",
+          "public",
+          "\"public\".\"events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"events_publicCode_key\" on \"events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"events_publicCode_key\"",
+        "sql": "ALTER TABLE \"public\".\"events\" ADD CONSTRAINT \"events_publicCode_key\" UNIQUE (\"publicCode\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"events_publicCode_key\" exists on (publicCode)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "events_publicCode_key",
+          "public",
+          "\"public\".\"events\"",
+          "u",
+          "[\"publicCode\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.events.events_ownerId_idx_e2d0c1ef",
+    "label": "Create index \"events_ownerId_idx_e2d0c1ef\" on \"events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "events_ownerId_idx_e2d0c1ef",
+        "table": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"events_ownerId_idx_e2d0c1ef\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"events_ownerId_idx_e2d0c1ef\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"events_ownerId_idx_e2d0c1ef\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"events_ownerId_idx_e2d0c1ef\"",
+        "sql": "CREATE INDEX \"events_ownerId_idx_e2d0c1ef\" ON \"public\".\"events\" (\"ownerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"events_ownerId_idx_e2d0c1ef\" exists on \"events\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"events_ownerId_idx_e2d0c1ef\"",
+          "i",
+          "I",
+          "\"public\".\"events\"",
+          "btree",
+          "[\"ownerId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.events.events_status_idx_e98638ab",
+    "label": "Create index \"events_status_idx_e98638ab\" on \"events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "events_status_idx_e98638ab",
+        "table": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"events_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"events_status_idx_e98638ab\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"events_status_idx_e98638ab\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"events_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"events_status_idx_e98638ab\" ON \"public\".\"events\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"events_status_idx_e98638ab\" exists on \"events\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"events_status_idx_e98638ab\"",
+          "i",
+          "I",
+          "\"public\".\"events\"",
+          "btree",
+          "[\"status\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.events.events_ownerId_fkey",
+    "label": "Add foreign key \"events_ownerId_fkey\" on \"events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "events_ownerId_fkey",
+        "table": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"events_ownerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "events_ownerId_fkey",
+          "public",
+          "\"public\".\"events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"events_ownerId_fkey\" on \"events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"events_ownerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"events\"\nADD CONSTRAINT \"events_ownerId_fkey\"\nFOREIGN KEY (\"ownerId\")\nREFERENCES \"public\".\"users\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"events_ownerId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "events_ownerId_fkey",
+          "public",
+          "\"public\".\"events\"",
+          "f",
+          "[\"ownerId\"]",
+          "\"public\".\"users\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

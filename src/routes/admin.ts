@@ -1,7 +1,15 @@
 import express from 'express';
 import { authenticate, requireJson, requireRole } from '../middlewares/authMiddleware.ts';
 import { ROLE } from '../core/const/roles.ts';
-import { getClients, patchClient, resendClientInvitation } from '../controllers/adminController.ts';
+import {
+    getClients,
+    getDashboardStats,
+    getEvents,
+    patchClient,
+    postEnableEvent,
+    postSuspendEvent,
+    resendClientInvitation,
+} from '../controllers/adminController.ts';
 
 const router = express.Router();
 
@@ -11,5 +19,11 @@ router.use(authenticate, requireRole(ROLE.SUPER_ADMIN));
 router.get('/clients', getClients);
 router.patch('/clients/:id', requireJson, patchClient);
 router.post('/clients/:id/resend', resendClientInvitation);
+
+router.get('/events', getEvents);
+router.post('/events/:id/enable', requireJson, postEnableEvent);
+router.post('/events/:id/suspend', postSuspendEvent);
+
+router.get('/stats', getDashboardStats);
 
 export default router;

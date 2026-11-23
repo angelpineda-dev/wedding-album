@@ -10,7 +10,7 @@ export const STAFF_PASSWORD = 'correct-horse-battery';
 
 export async function resetDatabase(): Promise<void> {
     assertTestDatabase(process.env['DATABASE_URL']!);
-    await db.execute(db.raw.sql`TRUNCATE TABLE magic_links, sessions, users RESTART IDENTITY CASCADE`.affectedCount().build());
+    await db.execute(db.raw.sql`TRUNCATE TABLE events, magic_links, sessions, users RESTART IDENTITY CASCADE`.affectedCount().build());
 }
 
 /** Replaces email sending with a spy; read the links with `sentMagicLinks()`. */
@@ -41,3 +41,13 @@ export async function createUserWithToken(role: Role) {
 
     return { user, auth: `Bearer ${token}` };
 }
+
+/** A valid `POST /api/events` body (Ana & Luis, 14 Mar 2027 16:00–03:00 Mexico City). */
+export const eventBody = (overrides: Record<string, unknown> = {}) => ({
+    name: 'Ana & Luis',
+    opensAt: '2027-03-14T16:00:00-06:00',
+    closesAt: '2027-03-15T03:00:00-06:00',
+    timezone: 'America/Mexico_City',
+    venueName: 'Hacienda San Gabriel',
+    ...overrides,
+});

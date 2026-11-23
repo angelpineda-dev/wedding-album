@@ -10,6 +10,7 @@ import { USER_STATUS } from '../core/const/userStatus.ts';
 import { signAccessToken } from './tokenService.ts';
 import { createSession, rotateSession, ROTATION, type SessionMeta } from './sessionService.ts';
 import { consumeMagicLink, sendMagicLink } from './magicLinkService.ts';
+import { isUniqueViolation } from '../utils/dbErrors.ts';
 
 /** Whether a user with role `actor` may create a user with role `target`. */
 const canAssignRole = (actor: Role, target: Role): boolean => {
@@ -41,12 +42,6 @@ const signsInWithMagicLink = (role: Role): boolean => {
         }
     }
 };
-
-const UNIQUE_VIOLATION = '23505';
-
-/** Postgres driver errors carry the SQLSTATE in `sqlState` (Prisma's SqlQueryError is not exported). */
-const isUniqueViolation = (error: unknown): boolean =>
-    typeof error === 'object' && error !== null && 'sqlState' in error && error.sqlState === UNIQUE_VIOLATION;
 
 /**
  * Creates a user (password hashed when given). Clients get no password and receive a magic link.

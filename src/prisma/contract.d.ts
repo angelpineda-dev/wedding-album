@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'82b62bd1be6ab83e06eb3aa13c336476355b7d21977d168fb541e109001319ae'>;
+  StorageHashBase<'29921458bf4541c640e9a7d1d26a5a928fc65aea57dfbede618315b1f7aa99cd'>;
 export type ExecutionHash =
-  ExecutionHashBase<'2161e177390f6939dfc18174814f9a17635803c83b97e89cc4e8130aec49e992'>;
+  ExecutionHashBase<'b0671d20398c54c1ca48a776024026e8ddd896ae2ef660475184b917f5250df3'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -278,6 +278,13 @@ type ParameterizedOutputTypeFunctions = PgParameterizedOutputTypes;
 type FieldTypeOverrides = {
   readonly public: {
     readonly models: {
+      readonly Event: {
+        readonly status: {
+          readonly output: 'PENDING' | 'ENABLED' | 'SUSPENDED';
+          readonly input: 'PENDING' | 'ENABLED' | 'SUSPENDED';
+        };
+        readonly type: { readonly output: 'WEDDING'; readonly input: 'WEDDING' };
+      };
       readonly User: {
         readonly role: {
           readonly output: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
@@ -309,6 +316,13 @@ export type FieldInputTypes = FieldTypesFromDomain<
 >;
 type ColumnTypeOverrides = {
   readonly public: {
+    readonly events: {
+      readonly status: {
+        readonly output: 'PENDING' | 'ENABLED' | 'SUSPENDED';
+        readonly input: 'PENDING' | 'ENABLED' | 'SUSPENDED';
+      };
+      readonly type: { readonly output: 'WEDDING'; readonly input: 'WEDDING' };
+    };
     readonly users: {
       readonly role: {
         readonly output: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
@@ -337,6 +351,30 @@ export type StorageColumnInputTypes = ColumnTypesFromStorage<
 >;
 
 export namespace Models {
+  export type public_Event = {
+    closesAt: FieldOutputTypes['public']['Event']['closesAt'];
+    createdAt: FieldOutputTypes['public']['Event']['createdAt'];
+    enabledAt: FieldOutputTypes['public']['Event']['enabledAt'];
+    galleryPollSeconds: FieldOutputTypes['public']['Event']['galleryPollSeconds'];
+    geofenceEnabled: FieldOutputTypes['public']['Event']['geofenceEnabled'];
+    id: FieldOutputTypes['public']['Event']['id'];
+    latitude: FieldOutputTypes['public']['Event']['latitude'];
+    longitude: FieldOutputTypes['public']['Event']['longitude'];
+    moderationRequired: FieldOutputTypes['public']['Event']['moderationRequired'];
+    name: FieldOutputTypes['public']['Event']['name'];
+    opensAt: FieldOutputTypes['public']['Event']['opensAt'];
+    ownerId: FieldOutputTypes['public']['Event']['ownerId'];
+    packageMax: FieldOutputTypes['public']['Event']['packageMax'];
+    publicCode: FieldOutputTypes['public']['Event']['publicCode'];
+    radiusMeters: FieldOutputTypes['public']['Event']['radiusMeters'];
+    status: FieldOutputTypes['public']['Event']['status'];
+    timezone: FieldOutputTypes['public']['Event']['timezone'];
+    type: FieldOutputTypes['public']['Event']['type'];
+    updatedAt: FieldOutputTypes['public']['Event']['updatedAt'];
+    venueName: FieldOutputTypes['public']['Event']['venueName'];
+    owner: public_User;
+    readonly [RelationKeys]?: 'owner';
+  };
   export type public_MagicLink = {
     createdAt: FieldOutputTypes['public']['MagicLink']['createdAt'];
     expiresAt: FieldOutputTypes['public']['MagicLink']['expiresAt'];
@@ -375,14 +413,16 @@ export namespace Models {
     status: FieldOutputTypes['public']['User']['status'];
     tokenVersion: FieldOutputTypes['public']['User']['tokenVersion'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
+    events: public_Event[];
     magicLinks: public_MagicLink[];
     sessions: public_Session[];
-    readonly [RelationKeys]?: 'magicLinks' | 'sessions';
+    readonly [RelationKeys]?: 'events' | 'magicLinks' | 'sessions';
   };
 }
 
 export declare const models: {
   public: {
+    Event: Models.public_Event;
     MagicLink: Models.public_MagicLink;
     Session: Models.public_Session;
     User: Models.public_User;
@@ -407,6 +447,191 @@ type ContractBase = Omit<
         readonly kind: 'postgres-schema';
         readonly entries: {
           readonly table: {
+            readonly events: {
+              columns: {
+                readonly closesAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly enabledAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly galleryPollSeconds: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 120>;
+                  };
+                  readonly many: false;
+                };
+                readonly geofenceEnabled: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly latitude: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly longitude: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly moderationRequired: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', true>;
+                  };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly opensAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly ownerId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly packageMax: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly publicCode: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly radiusMeters: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 5000>;
+                  };
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PENDING'>;
+                  };
+                  readonly many: false;
+                };
+                readonly timezone: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly type: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'WEDDING'>;
+                  };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly venueName: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['publicCode'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'events_ownerId_idx_e2d0c1ef';
+                  readonly prefix: 'events_ownerId_idx';
+                  readonly columns: readonly ['ownerId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'events_status_idx_e98638ab';
+                  readonly prefix: 'events_status_idx';
+                  readonly columns: readonly ['status'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'events';
+                    readonly columns: readonly ['ownerId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'users';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly magic_links: {
               columns: {
                 readonly createdAt: {
@@ -685,6 +910,14 @@ type ContractBase = Omit<
             };
           };
           readonly valueSet: {
+            readonly EventStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['PENDING', 'ENABLED', 'SUSPENDED'];
+            };
+            readonly EventType: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['WEDDING'];
+            };
             readonly Role: {
               readonly kind: 'valueSet';
               readonly values: readonly ['SUPER_ADMIN', 'ADMIN', 'USER'];
@@ -704,6 +937,7 @@ type ContractBase = Omit<
   readonly target: 'postgres';
   readonly targetFamily: 'sql';
   readonly roots: {
+    readonly events: { readonly namespace: 'public' & NamespaceId; readonly model: 'Event' };
     readonly magic_links: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'MagicLink';
@@ -715,6 +949,147 @@ type ContractBase = Omit<
     readonly namespaces: {
       readonly public: {
         readonly models: {
+          readonly Event: {
+            readonly fields: {
+              readonly closesAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly enabledAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly galleryPollSeconds: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly geofenceEnabled: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly latitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly longitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly moderationRequired: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly opensAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly ownerId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly packageMax: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly publicCode: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly radiusMeters: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly timezone: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly type: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly venueName: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly owner: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['ownerId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'events';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly closesAt: { readonly column: 'closesAt' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly enabledAt: { readonly column: 'enabledAt' };
+                readonly galleryPollSeconds: { readonly column: 'galleryPollSeconds' };
+                readonly geofenceEnabled: { readonly column: 'geofenceEnabled' };
+                readonly id: { readonly column: 'id' };
+                readonly latitude: { readonly column: 'latitude' };
+                readonly longitude: { readonly column: 'longitude' };
+                readonly moderationRequired: { readonly column: 'moderationRequired' };
+                readonly name: { readonly column: 'name' };
+                readonly opensAt: { readonly column: 'opensAt' };
+                readonly ownerId: { readonly column: 'ownerId' };
+                readonly packageMax: { readonly column: 'packageMax' };
+                readonly publicCode: { readonly column: 'publicCode' };
+                readonly radiusMeters: { readonly column: 'radiusMeters' };
+                readonly status: { readonly column: 'status' };
+                readonly timezone: { readonly column: 'timezone' };
+                readonly type: { readonly column: 'type' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly venueName: { readonly column: 'venueName' };
+              };
+            };
+          };
           readonly MagicLink: {
             readonly fields: {
               readonly createdAt: {
@@ -932,6 +1307,17 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly events: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Event';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['ownerId'];
+                };
+              };
               readonly magicLinks: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -978,6 +1364,18 @@ type ContractBase = Omit<
           };
         };
         readonly enum: {
+          readonly EventStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'PENDING'; readonly value: 'PENDING' },
+              { readonly name: 'ENABLED'; readonly value: 'ENABLED' },
+              { readonly name: 'SUSPENDED'; readonly value: 'SUSPENDED' },
+            ];
+          };
+          readonly EventType: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [{ readonly name: 'WEDDING'; readonly value: 'WEDDING' }];
+          };
           readonly Role: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -995,6 +1393,12 @@ type ContractBase = Omit<
           };
         };
         readonly enumMemberTypes?: {
+          readonly EventStatus: readonly [
+            { readonly name: 'PENDING'; readonly value: 'PENDING' },
+            { readonly name: 'ENABLED'; readonly value: 'ENABLED' },
+            { readonly name: 'SUSPENDED'; readonly value: 'SUSPENDED' },
+          ];
+          readonly EventType: readonly [{ readonly name: 'WEDDING'; readonly value: 'WEDDING' }];
           readonly Role: readonly [
             { readonly name: 'SUPER_ADMIN'; readonly value: 'SUPER_ADMIN' },
             { readonly name: 'ADMIN'; readonly value: 'ADMIN' },
@@ -1041,6 +1445,38 @@ type ContractBase = Omit<
     readonly executionHash: ExecutionHash;
     readonly mutations: {
       readonly defaults: readonly [
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'events';
+            readonly field: 'createdAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'events';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'events';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
         {
           readonly onCreate: {
             readonly id: 'timestampNow';
