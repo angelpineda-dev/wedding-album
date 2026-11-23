@@ -105,8 +105,25 @@ model Event {
   enabledAt          DateTime?
   createdAt          DateTime    @default(now()) @onCreate(now())
   updatedAt          DateTime    @default(now()) @onUpdate(now())
+  guests             Guest[]
 
   @@index([ownerId])
   @@index([status])
   @@map("events")
+}
+
+// Someone who joined an event from its QR with just a name. No account: the opaque
+// token returned on join (stored hashed) identifies them until `expiresAt`.
+model Guest {
+  id         String    @id @onCreate(uuid())
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name       String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now()) @onCreate(now())
+
+  @@index([eventId])
+  @@map("guests")
 }

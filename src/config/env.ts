@@ -39,6 +39,10 @@ const envSchema = z.object({
         .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean))
         .pipe(z.array(z.url().refine((origin) => new URL(origin).origin === origin, 'must be a bare origin (scheme://host[:port])'))),
 
+    // Public (QR) endpoints, per IP. Guests at one venue often share an IP.
+    PUBLIC_RATE_LIMIT_WINDOW_MINUTES: positiveInt.default(1),
+    PUBLIC_RATE_LIMIT_MAX: positiveInt.default(120),
+
     // Number of reverse proxies in front of the app (0 = none). Needed for real client IPs.
     TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

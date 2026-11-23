@@ -17,3 +17,14 @@ export const GALLERY_POLL_SECONDS = { MIN: 15, MAX: 600 } as const;
 export const RADIUS_METERS = { MIN: 100, MAX: 50_000 } as const;
 /** Longest allowed upload window. */
 export const MAX_WINDOW_HOURS = 72;
+
+/** Where `now` falls relative to an event's upload window (computed, not stored). */
+export const UPLOAD_WINDOW = {
+    UPCOMING: 'UPCOMING',
+    OPEN: 'OPEN',
+    CLOSED: 'CLOSED',
+} as const;
+export type UploadWindow = (typeof UPLOAD_WINDOW)[keyof typeof UPLOAD_WINDOW];
+
+/** A guest token stays valid this long after the event closes (to keep browsing "my uploads"). */
+export const GUEST_TOKEN_GRACE_DAYS = 7;

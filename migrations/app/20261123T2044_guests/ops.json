@@ -1,0 +1,199 @@
+[
+  {
+    "id": "table.guests",
+    "label": "Create table \"guests\"",
+    "summary": "Creates table \"guests\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "guests"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"guests\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"guests\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"guests\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"guests\"",
+        "sql": "CREATE TABLE \"public\".\"guests\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"eventId\" text NOT NULL,\n  \"expiresAt\" timestamptz(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"lastSeenAt\" timestamptz(3),\n  \"name\" text NOT NULL,\n  \"tokenHash\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"guests\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"guests\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"guests\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.guests.guests_tokenHash_key",
+    "label": "Add unique constraint on \"guests\" (tokenHash)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "guests_tokenHash_key",
+        "table": "guests"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"guests_tokenHash_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "guests_tokenHash_key",
+          "public",
+          "\"public\".\"guests\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"guests_tokenHash_key\" on \"guests\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"guests_tokenHash_key\"",
+        "sql": "ALTER TABLE \"public\".\"guests\" ADD CONSTRAINT \"guests_tokenHash_key\" UNIQUE (\"tokenHash\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"guests_tokenHash_key\" exists on (tokenHash)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "guests_tokenHash_key",
+          "public",
+          "\"public\".\"guests\"",
+          "u",
+          "[\"tokenHash\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.guests.guests_eventId_idx_6a266d47",
+    "label": "Create index \"guests_eventId_idx_6a266d47\" on \"guests\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "guests_eventId_idx_6a266d47",
+        "table": "guests"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"guests_eventId_idx_6a266d47\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"guests_eventId_idx_6a266d47\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"guests_eventId_idx_6a266d47\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"guests_eventId_idx_6a266d47\"",
+        "sql": "CREATE INDEX \"guests_eventId_idx_6a266d47\" ON \"public\".\"guests\" (\"eventId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"guests_eventId_idx_6a266d47\" exists on \"guests\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"guests_eventId_idx_6a266d47\"",
+          "i",
+          "I",
+          "\"public\".\"guests\"",
+          "btree",
+          "[\"eventId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.guests.guests_eventId_fkey",
+    "label": "Add foreign key \"guests_eventId_fkey\" on \"guests\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "guests_eventId_fkey",
+        "table": "guests"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"guests_eventId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "guests_eventId_fkey",
+          "public",
+          "\"public\".\"guests\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"guests_eventId_fkey\" on \"guests\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"guests_eventId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"guests\"\nADD CONSTRAINT \"guests_eventId_fkey\"\nFOREIGN KEY (\"eventId\")\nREFERENCES \"public\".\"events\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"guests_eventId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "guests_eventId_fkey",
+          "public",
+          "\"public\".\"guests\"",
+          "f",
+          "[\"eventId\"]",
+          "\"public\".\"events\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  }
+]

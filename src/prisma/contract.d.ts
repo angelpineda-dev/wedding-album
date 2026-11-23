@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'29921458bf4541c640e9a7d1d26a5a928fc65aea57dfbede618315b1f7aa99cd'>;
+  StorageHashBase<'812f50e38908e6ff0c8930f575542dbe6d36683a628762edda77ce979e666d5b'>;
 export type ExecutionHash =
-  ExecutionHashBase<'b0671d20398c54c1ca48a776024026e8ddd896ae2ef660475184b917f5250df3'>;
+  ExecutionHashBase<'aaafdd8ff0493b8a2b0164e5fe1bfa61f29820acdbecb0434fc7ebdca876b67f'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -372,8 +372,20 @@ export namespace Models {
     type: FieldOutputTypes['public']['Event']['type'];
     updatedAt: FieldOutputTypes['public']['Event']['updatedAt'];
     venueName: FieldOutputTypes['public']['Event']['venueName'];
+    guests: public_Guest[];
     owner: public_User;
-    readonly [RelationKeys]?: 'owner';
+    readonly [RelationKeys]?: 'guests' | 'owner';
+  };
+  export type public_Guest = {
+    createdAt: FieldOutputTypes['public']['Guest']['createdAt'];
+    eventId: FieldOutputTypes['public']['Guest']['eventId'];
+    expiresAt: FieldOutputTypes['public']['Guest']['expiresAt'];
+    id: FieldOutputTypes['public']['Guest']['id'];
+    lastSeenAt: FieldOutputTypes['public']['Guest']['lastSeenAt'];
+    name: FieldOutputTypes['public']['Guest']['name'];
+    tokenHash: FieldOutputTypes['public']['Guest']['tokenHash'];
+    event: public_Event;
+    readonly [RelationKeys]?: 'event';
   };
   export type public_MagicLink = {
     createdAt: FieldOutputTypes['public']['MagicLink']['createdAt'];
@@ -423,6 +435,7 @@ export namespace Models {
 export declare const models: {
   public: {
     Event: Models.public_Event;
+    Guest: Models.public_Guest;
     MagicLink: Models.public_MagicLink;
     Session: Models.public_Session;
     User: Models.public_User;
@@ -627,6 +640,80 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'users';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly guests: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly eventId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly expiresAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly lastSeenAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly tokenHash: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['tokenHash'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'guests_eventId_idx_6a266d47';
+                  readonly prefix: 'guests_eventId_idx';
+                  readonly columns: readonly ['eventId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'guests';
+                    readonly columns: readonly ['eventId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'events';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -938,6 +1025,7 @@ type ContractBase = Omit<
   readonly targetFamily: 'sql';
   readonly roots: {
     readonly events: { readonly namespace: 'public' & NamespaceId; readonly model: 'Event' };
+    readonly guests: { readonly namespace: 'public' & NamespaceId; readonly model: 'Guest' };
     readonly magic_links: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'MagicLink';
@@ -1053,6 +1141,17 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly guests: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Guest';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['eventId'];
+                };
+              };
               readonly owner: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
@@ -1087,6 +1186,77 @@ type ContractBase = Omit<
                 readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly venueName: { readonly column: 'venueName' };
+              };
+            };
+          };
+          readonly Guest: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly eventId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly expiresAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly lastSeenAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly tokenHash: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly event: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Event';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['eventId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'guests';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly eventId: { readonly column: 'eventId' };
+                readonly expiresAt: { readonly column: 'expiresAt' };
+                readonly id: { readonly column: 'id' };
+                readonly lastSeenAt: { readonly column: 'lastSeenAt' };
+                readonly name: { readonly column: 'name' };
+                readonly tokenHash: { readonly column: 'tokenHash' };
               };
             };
           };
@@ -1474,6 +1644,26 @@ type ContractBase = Omit<
           readonly ref: {
             readonly entry: 'events';
             readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'guests';
+            readonly field: 'createdAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'guests';
+            readonly field: 'id';
             readonly namespace: 'public';
           };
         },

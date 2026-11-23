@@ -98,9 +98,18 @@ export async function createEvent(ownerId: number, settings: EventSettings) {
     }
 }
 
+/** Own events with how many guests have joined each. */
+const ownEventsWithCounts = (ownerId: number) =>
+    db.orm.public.Event.where({ ownerId }).include('guests', (guests) => guests.count());
+
+const withCounts = ({ guests, ...event }: EventRow & { guests: number }) => ({
+    ...toEventResponse(event),
+    guestCount: guests,
+});
+
 export async function listOwnEvents(ownerId: number) {
-    const events = await db.orm.public.Event.where({ ownerId }).orderBy((e) => e.opensAt.desc()).all();
-    return events.map(toEventResponse);
+    const events = await ownEventsWithCounts(ownerId).orderBy((e) => e.opensAt.desc()).all();
+    return events.map(withCounts);
 }
 
 /** The client's own event, or 404 (also for other clients' events, so ids cannot be probed). */
@@ -113,7 +122,11 @@ async function findOwnedEvent(ownerId: number, id: string) {
 }
 
 export async function getOwnedEvent(ownerId: number, id: string) {
-    return toEventResponse(await findOwnedEvent(ownerId, id));
+    const event = await ownEventsWithCounts(ownerId).where({ id }).first();
+    if (!event) {
+        throw new AppError(eventMessages.NOT_FOUND, 404);
+    }
+    return withCounts(event);
 }
 
 export async function updateOwnedEvent(ownerId: number, id: string, changes: Partial<EventSettings>) {

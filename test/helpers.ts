@@ -3,14 +3,16 @@ import { db } from '../src/prisma/db.ts';
 import { createUser, signsInWithMagicLink } from '../src/services/authService.ts';
 import { signAccessToken } from '../src/services/tokenService.ts';
 import { mailService } from '../src/services/mailService.ts';
-import type { Role } from '../src/core/const/roles.ts';
+import { createEvent } from '../src/services/eventService.ts';
+import { ROLE, type Role } from '../src/core/const/roles.ts';
+import { EVENT_STATUS } from '../src/core/const/event.ts';
 import { assertTestDatabase } from './testEnv.ts';
 
 export const STAFF_PASSWORD = 'correct-horse-battery';
 
 export async function resetDatabase(): Promise<void> {
     assertTestDatabase(process.env['DATABASE_URL']!);
-    await db.execute(db.raw.sql`TRUNCATE TABLE events, magic_links, sessions, users RESTART IDENTITY CASCADE`.affectedCount().build());
+    await db.execute(db.raw.sql`TRUNCATE TABLE guests, events, magic_links, sessions, users RESTART IDENTITY CASCADE`.affectedCount().build());
 }
 
 /** Replaces email sending with a spy; read the links with `sentMagicLinks()`. */
@@ -51,3 +53,28 @@ export const eventBody = (overrides: Record<string, unknown> = {}) => ({
     venueName: 'Hacienda San Gabriel',
     ...overrides,
 });
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * An ENABLED event owned by a new client. `open` puts `now` inside the upload window
+ * (otherwise the window is in 2027); `geofence` centers it on Guadalajara with a 5 km radius.
+ */
+export async function createEnabledEvent({ packageMax = 100, open = true, geofence = false } = {}) {
+    const owner = await createUserWithToken(ROLE.USER);
+    const created = await createEvent(owner.user.id, {
+        name: 'Ana & Luis',
+        opensAt: open ? new Date(Date.now() - HOUR_MS) : new Date('2027-03-14T22:00:00Z'),
+        closesAt: open ? new Date(Date.now() + 5 * HOUR_MS) : new Date('2027-03-15T09:00:00Z'),
+        timezone: 'America/Mexico_City',
+        venueName: 'Hacienda San Gabriel',
+        geofenceEnabled: geofence,
+        latitude: geofence ? 20.6597 : null,
+        longitude: geofence ? -103.3496 : null,
+        radiusMeters: 5000,
+        moderationRequired: true,
+        galleryPollSeconds: 120,
+    });
+    const event = (await db.orm.public.Event.where({ id: created.id }).update({ status: EVENT_STATUS.ENABLED, packageMax, enabledAt: new Date() }))!;
+    return { owner, event };
+}
