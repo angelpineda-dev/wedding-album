@@ -9,6 +9,7 @@ import { USER_STATUS } from '../core/const/userStatus.ts';
 import { EVENT_STATUS, GUEST_TOLERANCE, MAX_WINDOW_HOURS, type EventStatus } from '../core/const/event.ts';
 import { isUniqueViolation } from '../utils/dbErrors.ts';
 import { MEDIA_STATUS } from '../core/const/media.ts';
+import { publicEventUrl } from './qrService.ts';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -32,6 +33,7 @@ type EventRow = NonNullable<Awaited<ReturnType<typeof db.orm.public.Event.first>
 /** Adds the guest limit the package grants (null until a SUPER_ADMIN enables the event). */
 export const toEventResponse = (event: EventRow) => ({
     ...event,
+    publicUrl: publicEventUrl(event.publicCode),
     guestLimit: event.packageMax === null ? null : event.packageMax + GUEST_TOLERANCE,
 });
 
@@ -148,6 +150,38 @@ export async function updateOwnedEvent(ownerId: number, id: string, changes: Par
 
     const updated = await db.orm.public.Event.where({ id, ownerId }).update(changes);
     return toEventResponse(updated!);
+}
+
+/** The client's event, if its QR is live (ENABLED); the QR only works once the package is confirmed. */
+export async function getOwnedEventForQr(ownerId: number, id: string) {
+    const event = await findOwnedEvent(ownerId, id);
+    if (event.status !== EVENT_STATUS.ENABLED) {
+        throw new AppError(eventMessages.QR_NOT_ACTIVE, 409);
+    }
+    return event;
+}
+
+/**
+ * Issues a new public code, e.g. after the QR leaked. The old code stops working at once
+ * (printed cards must be redone); guests who already joined keep their tokens.
+ */
+export async function rotatePublicCode(ownerId: number, id: string) {
+    const event = await findOwnedEvent(ownerId, id);
+    if (event.status === EVENT_STATUS.SUSPENDED) {
+        throw new AppError(eventMessages.SUSPENDED, 409);
+    }
+
+    for (let attempt = 1; ; attempt += 1) {
+        try {
+            const updated = await db.orm.public.Event.where({ id, ownerId }).update({ publicCode: generatePublicCode() });
+            return toEventResponse(updated!);
+        } catch (error) {
+            if (attempt < CODE_ATTEMPTS && isUniqueViolation(error)) {
+                continue;
+            }
+            throw error;
+        }
+    }
 }
 
 // ── Platform administration (SUPER_ADMIN) ──────────────────────────────────

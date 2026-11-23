@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticate, requireJson, requireRole } from '../middlewares/authMiddleware.ts';
 import { ROLE } from '../core/const/roles.ts';
-import { getEvent, getEvents, patchEvent, postEvent } from '../controllers/eventController.ts';
+import { getEvent, getEvents, getQrPdf, getQrPng, patchEvent, postEvent, postRotateQr } from '../controllers/eventController.ts';
 
 const router = express.Router();
 
@@ -12,5 +12,9 @@ router.get('/', getEvents);
 router.post('/', requireJson, postEvent);
 router.get('/:id', getEvent);
 router.patch('/:id', requireJson, patchEvent);
+
+router.get('/:id/qr.png', getQrPng);
+router.get('/:id/qr.pdf', getQrPdf);
+router.post('/:id/qr/rotate', postRotateQr);
 
 export default router;

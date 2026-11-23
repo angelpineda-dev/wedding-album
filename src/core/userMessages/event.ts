@@ -6,5 +6,6 @@ export const eventMessages = {
     GEOFENCE_NEEDS_LOCATION: 'Turning on the location limit needs latitude and longitude.',
     INVALID_TIMEZONE: 'Unknown time zone.',
     SUSPENDED: 'This event is suspended.',
+    QR_NOT_ACTIVE: 'The QR is activated once your package is confirmed.',
     PACKAGE_STEP: 'The package must be a multiple of 25 guests.',
 } as const;

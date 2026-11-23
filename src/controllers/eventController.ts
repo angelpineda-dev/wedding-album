@@ -2,7 +2,15 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { eventMessages } from '../core/userMessages/event.ts';
 import { GALLERY_POLL_SECONDS, RADIUS_METERS } from '../core/const/event.ts';
-import { createEvent, getOwnedEvent, listOwnEvents, updateOwnedEvent } from '../services/eventService.ts';
+import {
+    createEvent,
+    getOwnedEvent,
+    getOwnedEventForQr,
+    listOwnEvents,
+    rotatePublicCode,
+    updateOwnedEvent,
+} from '../services/eventService.ts';
+import { renderQrPdf, renderQrPng } from '../services/qrService.ts';
 
 const isTimeZone = (value: string): boolean => {
     try {
@@ -73,4 +81,28 @@ const patchEvent = async (req: Request, res: Response) => {
     return res.json({ success: true, data: await updateOwnedEvent(req.user!.id, id, defined) });
 };
 
-export { postEvent, getEvents, getEvent, patchEvent };
+/** "Descargar PNG": the QR alone, as a download. */
+const getQrPng = async (req: Request, res: Response) => {
+    const { id } = idParam.parse(req.params);
+    const event = await getOwnedEventForQr(req.user!.id, id);
+    const png = await renderQrPng(event.publicCode);
+
+    res.attachment(`qr-${event.publicCode}.png`).type('png').send(png);
+};
+
+/** "PDF para imprimir": a letter page with the event name, QR, link and upload hours. */
+const getQrPdf = async (req: Request, res: Response) => {
+    const { id } = idParam.parse(req.params);
+    const event = await getOwnedEventForQr(req.user!.id, id);
+    const pdf = await renderQrPdf(event);
+
+    res.attachment(`qr-${event.publicCode}.pdf`).type('pdf').send(pdf);
+};
+
+/** "Regenerar QR". */
+const postRotateQr = async (req: Request, res: Response) => {
+    const { id } = idParam.parse(req.params);
+    return res.json({ success: true, data: await rotatePublicCode(req.user!.id, id) });
+};
+
+export { postEvent, getEvents, getEvent, patchEvent, getQrPng, getQrPdf, postRotateQr };
