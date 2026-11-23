@@ -3,6 +3,7 @@ import { and } from '@prisma/orm-postgres/orm-client';
 import { db } from '../prisma/db.ts';
 import { env } from '../config/env.ts';
 import { generateRefreshToken, hashToken } from './tokenService.ts';
+import { USER_STATUS } from '../core/const/userStatus.ts';
 
 type Orm = typeof db.orm;
 
@@ -109,7 +110,7 @@ export async function rotateSession(refreshToken: string, meta: SessionMeta): Pr
 
         const user = await tx.orm.public.User.where({ id: session.userId }).first();
 
-        if (!user || user.deletedAt) {
+        if (!user || user.deletedAt || user.status !== USER_STATUS.ACTIVE) {
             return { kind: ROTATION.INVALID };
         }
 

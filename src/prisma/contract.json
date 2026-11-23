@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "magic_links": {
+      "model": "MagicLink",
+      "namespace": "public"
+    },
     "sessions": {
       "model": "Session",
       "namespace": "public"
@@ -33,9 +37,119 @@
                 "value": "USER"
               }
             ]
+          },
+          "UserStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ACTIVE",
+                "value": "ACTIVE"
+              },
+              {
+                "name": "SUSPENDED",
+                "value": "SUSPENDED"
+              }
+            ]
           }
         },
         "models": {
+          "MagicLink": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "usedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "tokenHash": {
+                  "column": "tokenHash"
+                },
+                "usedAt": {
+                  "column": "usedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "magic_links"
+            }
+          },
           "Session": {
             "fields": {
               "createdAt": {
@@ -192,6 +306,13 @@
                   "kind": "scalar"
                 }
               },
+              "eventQuota": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "failedLoginAttempts": {
                 "nullable": false,
                 "type": {
@@ -231,7 +352,7 @@
                 }
               },
               "password": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -246,6 +367,19 @@
                 "valueSet": {
                   "entityKind": "enum",
                   "entityName": "Role",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "UserStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -269,6 +403,21 @@
               }
             },
             "relations": {
+              "magicLinks": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "MagicLink",
+                  "namespace": "public"
+                }
+              },
               "sessions": {
                 "cardinality": "1:N",
                 "on": {
@@ -296,6 +445,9 @@
                 "email": {
                   "column": "email"
                 },
+                "eventQuota": {
+                  "column": "eventQuota"
+                },
                 "failedLoginAttempts": {
                   "column": "failedLoginAttempts"
                 },
@@ -317,6 +469,9 @@
                 "role": {
                   "column": "role"
                 },
+                "status": {
+                  "column": "status"
+                },
                 "tokenVersion": {
                   "column": "tokenVersion"
                 },
@@ -337,6 +492,97 @@
       "public": {
         "entries": {
           "table": {
+            "magic_links": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "tokenHash": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "usedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "magic_links_userId_idx_a489d58a"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "magic_links"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "magic_links_userId_idx_a489d58a",
+                  "prefix": "magic_links_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "tokenHash"
+                  ]
+                }
+              ]
+            },
             "sessions": {
               "columns": {
                 "createdAt": {
@@ -449,6 +695,11 @@
                   "expression": "\"role\" IN ('SUPER_ADMIN', 'ADMIN', 'USER')",
                   "name": "users_role_check_dbc66b64",
                   "prefix": "users_role_check"
+                },
+                {
+                  "expression": "\"status\" IN ('ACTIVE', 'SUSPENDED')",
+                  "name": "users_status_check_1527ac15",
+                  "prefix": "users_status_check"
                 }
               ],
               "columns": {
@@ -475,6 +726,15 @@
                 "email": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
+                  "nullable": false
+                },
+                "eventQuota": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
                   "nullable": false
                 },
                 "failedLoginAttempts": {
@@ -516,7 +776,7 @@
                 "password": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "role": {
                   "codecId": "pg/text@1",
@@ -529,6 +789,21 @@
                   "valueSet": {
                     "entityKind": "valueSet",
                     "entityName": "Role",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "ACTIVE"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "UserStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -579,6 +854,13 @@
                 "ADMIN",
                 "USER"
               ]
+            },
+            "UserStatus": {
+              "kind": "valueSet",
+              "values": [
+                "ACTIVE",
+                "SUSPENDED"
+              ]
             }
           }
         },
@@ -586,12 +868,37 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "5c84b3346109e970efa868863448af1442af595e95d8ba70a3486d48d4a77e09"
+    "storageHash": "82b62bd1be6ab83e06eb3aa13c336476355b7d21977d168fb541e109001319ae"
   },
   "execution": {
-    "executionHash": "f657c9116357aa6024520bd4cb70297eb29233a9c87c8fbff89439e09dffdde3",
+    "executionHash": "2161e177390f6939dfc18174814f9a17635803c83b97e89cc4e8130aec49e992",
     "mutations": {
       "defaults": [
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
+            "entry": "magic_links",
+            "field": "createdAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "magic_links",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
         {
           "onCreate": {
             "id": "timestampNow",

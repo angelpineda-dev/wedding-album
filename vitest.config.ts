@@ -7,6 +7,8 @@ export default defineConfig({
         globalSetup: ['test/globalSetup.ts'],
         // Every file shares one database and truncates it: run files one at a time.
         fileParallelism: false,
+        // Each test starts with fresh spies (e.g. the mail mock).
+        restoreMocks: true,
         env: {
             NODE_ENV: 'test',
             DATABASE_URL: TEST_DATABASE_URL,

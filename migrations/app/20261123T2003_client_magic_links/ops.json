@@ -1,0 +1,433 @@
+[
+  {
+    "id": "table.magic_links",
+    "label": "Create table \"magic_links\"",
+    "summary": "Creates table \"magic_links\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "magic_links"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"magic_links\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"magic_links\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"magic_links\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"magic_links\"",
+        "sql": "CREATE TABLE \"public\".\"magic_links\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"tokenHash\" text NOT NULL,\n  \"usedAt\" timestamptz(3),\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"magic_links\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"magic_links\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"magic_links\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.users.eventQuota",
+    "label": "Add column \"eventQuota\" to \"users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "eventQuota",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"eventQuota\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "eventQuota"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"eventQuota\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"eventQuota\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD COLUMN \"eventQuota\" int4 DEFAULT 1 NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"eventQuota\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "eventQuota"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"eventQuota\" on \"users\""
+        }
+      },
+      {
+        "description": "verify column \"eventQuota\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "eventQuota",
+          "integer"
+        ]
+      },
+      {
+        "description": "verify column \"eventQuota\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "eventQuota",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.users.status",
+    "label": "Add column \"status\" to \"users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "status",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"status\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "status"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"status\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"status\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD COLUMN \"status\" text DEFAULT 'ACTIVE' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"status\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "status"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"status\" on \"users\""
+        }
+      },
+      {
+        "description": "verify column \"status\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "status",
+          "text"
+        ]
+      },
+      {
+        "description": "verify column \"status\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "status",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.users.password",
+    "label": "Drop NOT NULL on \"users\".\"password\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "password",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"password\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "password"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"password\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"password\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ALTER COLUMN \"password\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"password\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "users",
+          "password",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.magic_links.magic_links_tokenHash_key",
+    "label": "Add unique constraint on \"magic_links\" (tokenHash)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "magic_links_tokenHash_key",
+        "table": "magic_links"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"magic_links_tokenHash_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "magic_links_tokenHash_key",
+          "public",
+          "\"public\".\"magic_links\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"magic_links_tokenHash_key\" on \"magic_links\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"magic_links_tokenHash_key\"",
+        "sql": "ALTER TABLE \"public\".\"magic_links\" ADD CONSTRAINT \"magic_links_tokenHash_key\" UNIQUE (\"tokenHash\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"magic_links_tokenHash_key\" exists on (tokenHash)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "magic_links_tokenHash_key",
+          "public",
+          "\"public\".\"magic_links\"",
+          "u",
+          "[\"tokenHash\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.users.users_status_check_1527ac15",
+    "label": "Add check constraint \"users_status_check_1527ac15\" on \"users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "users_status_check_1527ac15",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"users_status_check_1527ac15\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "users_status_check_1527ac15",
+          "public",
+          "\"public\".\"users\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"users_status_check_1527ac15\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"users_status_check_1527ac15\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD CONSTRAINT \"users_status_check_1527ac15\" CHECK (\"status\" IN ('ACTIVE', 'SUSPENDED'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify check constraint \"users_status_check_1527ac15\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4)) AS \"result\"",
+        "params": [
+          "users_status_check_1527ac15",
+          "public",
+          "\"public\".\"users\"",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.magic_links.magic_links_userId_idx_a489d58a",
+    "label": "Create index \"magic_links_userId_idx_a489d58a\" on \"magic_links\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "magic_links_userId_idx_a489d58a",
+        "table": "magic_links"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"magic_links_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"magic_links_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"magic_links_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"magic_links_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"magic_links_userId_idx_a489d58a\" ON \"public\".\"magic_links\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"magic_links_userId_idx_a489d58a\" exists on \"magic_links\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"magic_links_userId_idx_a489d58a\"",
+          "i",
+          "I",
+          "\"public\".\"magic_links\"",
+          "btree",
+          "[\"userId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.magic_links.magic_links_userId_fkey",
+    "label": "Add foreign key \"magic_links_userId_fkey\" on \"magic_links\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "magic_links_userId_fkey",
+        "table": "magic_links"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"magic_links_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "magic_links_userId_fkey",
+          "public",
+          "\"public\".\"magic_links\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"magic_links_userId_fkey\" on \"magic_links\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"magic_links_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"magic_links\"\nADD CONSTRAINT \"magic_links_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"magic_links_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "magic_links_userId_fkey",
+          "public",
+          "\"public\".\"magic_links\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"users\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  }
+]

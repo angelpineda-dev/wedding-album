@@ -4,10 +4,11 @@ import { authMessages } from '../core/userMessages/auth.ts';
 import { verifyAccessToken } from '../services/tokenService.ts';
 import { db } from '../prisma/db.ts';
 import type { Role } from '../core/const/roles.ts';
+import { USER_STATUS } from '../core/const/userStatus.ts';
 
 /**
  * Requires `Authorization: Bearer <accessToken>`.
- * Loads the user so deleted users and invalidated tokens (tokenVersion bump) are rejected immediately.
+ * Loads the user so deleted or suspended users and invalidated tokens (tokenVersion bump) are rejected immediately.
  */
 async function authenticate(req: Request, _res: Response, next: NextFunction) {
     const [scheme, token] = req.get('Authorization')?.split(' ') ?? [];
@@ -20,10 +21,10 @@ async function authenticate(req: Request, _res: Response, next: NextFunction) {
     const userId = Number(payload.sub);
 
     const user = Number.isInteger(userId)
-        ? await db.orm.public.User.select('id', 'role', 'tokenVersion', 'deletedAt').where({ id: userId }).first()
+        ? await db.orm.public.User.select('id', 'role', 'status', 'tokenVersion', 'deletedAt').where({ id: userId }).first()
         : null;
 
-    if (!user || user.deletedAt !== null || user.tokenVersion !== payload.tv) {
+    if (!user || user.deletedAt !== null || user.status !== USER_STATUS.ACTIVE || user.tokenVersion !== payload.tv) {
         throw new AppError(authMessages.INVALID_TOKEN, 401);
     }
 

@@ -5,13 +5,23 @@ enum Role {
   USER
 }
 
+// Suspended users cannot sign in; suspending also revokes every session.
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model User {
   id                  Int                @id @default(autoincrement())
   email               String             @unique
   name                String             
   lastName            String?
-  password            String
+  // Null for clients (role USER): they sign in with a magic link.
+  password            String?
   role                Role               @default(USER)
+  status              UserStatus         @default(ACTIVE)
+  // How many events a client may create.
+  eventQuota          Int                @default(1)
   // Bumped on logout-all / refresh-token reuse: invalidates every access token issued before.
   tokenVersion        Int                @default(0)
   failedLoginAttempts Int                @default(0)
@@ -20,6 +30,7 @@ model User {
   updatedAt           DateTime           @default(now()) @onUpdate(now())
   deletedAt           DateTime?
   sessions            Session[]
+  magicLinks          MagicLink[]
   
   @@map("users")          
 }
@@ -40,4 +51,18 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+// One-time sign-in link for clients. Only the SHA-256 of the token is stored.
+model MagicLink {
+  id        String    @id @onCreate(uuid())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now()) @onCreate(now())
+
+  @@index([userId])
+  @@map("magic_links")
 }

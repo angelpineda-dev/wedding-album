@@ -22,6 +22,10 @@ const envSchema = z.object({
     // Defaults to true in production.
     COOKIE_SECURE: booleanString.optional(),
 
+    // Magic link (client sign-in). The link points to the web app, which POSTs the token back.
+    APP_PUBLIC_URL: z.url().default('http://localhost:5173'),
+    MAGIC_LINK_TTL_MINUTES: positiveInt.max(60).default(15),
+
     // Login hardening
     BCRYPT_COST: z.coerce.number().int().min(10).max(15).default(12),
     LOGIN_MAX_ATTEMPTS: positiveInt.default(5),
