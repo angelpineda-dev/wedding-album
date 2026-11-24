@@ -5,7 +5,7 @@ import { signAccessToken } from '../src/services/tokenService.ts';
 import { mailService } from '../src/services/mailService.ts';
 import { createEvent } from '../src/services/eventService.ts';
 import { ROLE, type Role } from '../src/core/const/roles.ts';
-import { EVENT_STATUS } from '../src/core/const/event.ts';
+import { EVENT_STATUS, RADIUS_METERS } from '../src/core/const/event.ts';
 import { MEDIA_KIND, MEDIA_STATUS, type MediaKind, type MediaStatus } from '../src/core/const/media.ts';
 import { assertTestDatabase } from './testEnv.ts';
 
@@ -72,7 +72,7 @@ export async function createEnabledEvent({ packageMax = 100, open = true, geofen
         geofenceEnabled: geofence,
         latitude: geofence ? 20.6597 : null,
         longitude: geofence ? -103.3496 : null,
-        radiusMeters: 5000,
+        radiusMeters: RADIUS_METERS.MAX,
         moderationRequired: true,
         galleryPollSeconds: 120,
     });

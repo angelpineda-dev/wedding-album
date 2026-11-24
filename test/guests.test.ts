@@ -2,12 +2,13 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.ts';
 import { db } from '../src/prisma/db.ts';
-import { EVENT_STATUS, UPLOAD_WINDOW } from '../src/core/const/event.ts';
+import { EVENT_STATUS, RADIUS_METERS, UPLOAD_WINDOW } from '../src/core/const/event.ts';
 import { hashToken } from '../src/services/tokenService.ts';
 import { createEnabledEvent, eventBody, mockMail, resetDatabase } from './helpers.ts';
 
 const GUADALAJARA = { latitude: 20.6597, longitude: -103.3496 };
-const NEARBY = { latitude: 20.6700, longitude: -103.3600 }; // ~1.6 km away
+const NEARBY = { latitude: 20.6651, longitude: -103.3496 }; // ~600 m away
+const PAST_RADIUS = { latitude: 20.6700, longitude: -103.3600 }; // ~1.6 km away: beyond the 1 km cap
 const CHAPALA = { latitude: 20.2963, longitude: -103.1906 }; // ~43 km away
 
 const join = (code: string, name = 'Sofía') =>
@@ -47,7 +48,7 @@ describe('GET /api/public/events/:code', () => {
             name: 'Ana & Luis',
             uploadWindow: UPLOAD_WINDOW.OPEN,
             geofenceEnabled: true,
-            radiusMeters: 5000,
+            radiusMeters: RADIUS_METERS.MAX,
             galleryPollSeconds: 120,
         });
         expect(res.body.data).not.toHaveProperty('latitude');
@@ -162,9 +163,13 @@ describe('POST /api/guest/presence', () => {
         const { token, guest } = (await join(event.publicCode)).body.data;
 
         const near = await presence(token, NEARBY);
-        expect(near.body.data).toMatchObject({ canUpload: true, inside: true, radiusMeters: 5000 });
-        expect(near.body.data.distanceMeters).toBeGreaterThan(1000);
-        expect(near.body.data.distanceMeters).toBeLessThan(2500);
+        expect(near.body.data).toMatchObject({ canUpload: true, inside: true, radiusMeters: RADIUS_METERS.MAX });
+        expect(near.body.data.distanceMeters).toBeGreaterThan(500);
+        expect(near.body.data.distanceMeters).toBeLessThan(700);
+
+        const past = await presence(token, PAST_RADIUS);
+        expect(past.body.data).toMatchObject({ canUpload: false, inside: false });
+        expect(past.body.data.distanceMeters).toBeGreaterThan(RADIUS_METERS.MAX);
 
         const far = await presence(token, CHAPALA);
         expect(far.body.data).toMatchObject({ canUpload: false, inside: false });

@@ -1,0 +1,60 @@
+[
+  {
+    "id": "data.events.radiusMeters.cap1km",
+    "label": "Cap \"events\".\"radiusMeters\" at 1000",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "radiusMeters",
+        "table": "events"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "cap geofence radius at 1000 m",
+        "sql": "UPDATE \"public\".\"events\" SET \"radiusMeters\" = 1000 WHERE \"radiusMeters\" > 1000"
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "setDefault.events.radiusMeters",
+    "label": "Set default on \"events\".\"radiusMeters\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "radiusMeters",
+        "table": "events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"radiusMeters\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "events",
+          "radiusMeters"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"radiusMeters\" on \"events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"radiusMeters\"",
+        "sql": "ALTER TABLE \"public\".\"events\" ALTER COLUMN \"radiusMeters\" SET DEFAULT 300"
+      }
+    ],
+    "postcheck": []
+  }
+]

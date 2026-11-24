@@ -438,7 +438,7 @@
             "description": "Nace PENDING hasta que el superadmin lo habilite. Respeta la cuota del cliente (409 si se agotó). Guarda `eventId` y `eventCode`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ana & Luis\",\n  \"opensAt\": \"{{opensAt}}\",\n  \"closesAt\": \"{{closesAt}}\",\n  \"timezone\": \"America/Mexico_City\",\n  \"venueName\": \"Hacienda San Gabriel\",\n  \"geofenceEnabled\": true,\n  \"latitude\": 20.6597,\n  \"longitude\": -103.3496,\n  \"radiusMeters\": 5000,\n  \"moderationRequired\": true,\n  \"galleryPollSeconds\": 120\n}",
+              "raw": "{\n  \"name\": \"Ana & Luis\",\n  \"opensAt\": \"{{opensAt}}\",\n  \"closesAt\": \"{{closesAt}}\",\n  \"timezone\": \"America/Mexico_City\",\n  \"venueName\": \"Hacienda San Gabriel\",\n  \"geofenceEnabled\": true,\n  \"latitude\": 20.6597,\n  \"longitude\": -103.3496,\n  \"radiusMeters\": 300,\n  \"moderationRequired\": true,\n  \"galleryPollSeconds\": 120\n}",
               "options": {
                 "raw": {
                   "language": "json"

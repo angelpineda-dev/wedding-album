@@ -1319,7 +1319,7 @@
                   "dataType": "pg/int4",
                   "default": {
                     "kind": "literal",
-                    "value": 5000
+                    "value": 300
                   },
                   "nullable": false
                 },
@@ -2143,7 +2143,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b6f36e9756411faa78ac24cf6b442efad20aed906607ea03eb8ac570352f8622"
+    "storageHash": "a0e2aa05c080453838e5d153479ce276ba1939f041a453eb42931a7baa2bdb6d"
   },
   "execution": {
     "executionHash": "406d9f466b76e5ac26a59165899ce5dfb4779d9c6609acb8894f13a4c88df67e",

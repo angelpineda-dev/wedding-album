@@ -45,7 +45,7 @@ const createBody = z.strictObject({
     geofenceEnabled: settingsShape.geofenceEnabled.default(false),
     latitude: settingsShape.latitude.default(null),
     longitude: settingsShape.longitude.default(null),
-    radiusMeters: settingsShape.radiusMeters.default(5000),
+    radiusMeters: settingsShape.radiusMeters.default(RADIUS_METERS.DEFAULT),
     moderationRequired: settingsShape.moderationRequired.default(true),
     galleryPollSeconds: settingsShape.galleryPollSeconds.default(120),
 });

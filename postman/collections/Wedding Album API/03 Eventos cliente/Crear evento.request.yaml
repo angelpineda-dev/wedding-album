@@ -19,7 +19,7 @@ body:
       "geofenceEnabled": true,
       "latitude": 20.6597,
       "longitude": -103.3496,
-      "radiusMeters": 5000,
+      "radiusMeters": 300,
       "moderationRequired": true,
       "galleryPollSeconds": 120
     }

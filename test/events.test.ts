@@ -3,7 +3,7 @@ import request from 'supertest';
 import { app } from '../src/app.ts';
 import { db } from '../src/prisma/db.ts';
 import { ROLE } from '../src/core/const/roles.ts';
-import { EVENT_STATUS } from '../src/core/const/event.ts';
+import { EVENT_STATUS, RADIUS_METERS } from '../src/core/const/event.ts';
 import { createUserWithToken, eventBody, mockMail, resetDatabase } from './helpers.ts';
 
 let client: Awaited<ReturnType<typeof createUserWithToken>>;
@@ -31,6 +31,7 @@ describe('POST /api/events', () => {
             moderationRequired: true,
             galleryPollSeconds: 120,
             geofenceEnabled: false,
+            radiusMeters: RADIUS_METERS.DEFAULT,
             packageMax: null,
             guestLimit: null,
         });
@@ -44,7 +45,7 @@ describe('POST /api/events', () => {
             geofenceEnabled: true,
             latitude: 20.6597,
             longitude: -103.3496,
-            radiusMeters: 5000,
+            radiusMeters: RADIUS_METERS.MAX,
         }));
 
         expect(res.status).toBe(201);
@@ -72,6 +73,8 @@ describe('POST /api/events', () => {
         ['an unknown time zone', { timezone: 'Mars/Olympus_Mons' }],
         ['a timestamp without offset', { opensAt: '2027-03-14T16:00:00' }],
         ['a poll interval under 15 s', { galleryPollSeconds: 5 }],
+        ['a geofence radius over 1 km', { radiusMeters: RADIUS_METERS.MAX + 1 }],
+        ['a geofence radius under 100 m', { radiusMeters: RADIUS_METERS.MIN - 1 }],
         ['a server-managed field', { status: EVENT_STATUS.ENABLED }],
         ['a package', { packageMax: 100 }],
     ])('400 with %s', async (_label, overrides) => {

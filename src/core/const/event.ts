@@ -14,7 +14,8 @@ export const PACKAGE_MAX = 1000;
 export const GUEST_TOLERANCE = 5;
 
 export const GALLERY_POLL_SECONDS = { MIN: 15, MAX: 600 } as const;
-export const RADIUS_METERS = { MIN: 100, MAX: 50_000 } as const;
+/** Geofence radius. Capped at 1 km: a wedding venue, not a city. DEFAULT mirrors the column default. */
+export const RADIUS_METERS = { MIN: 100, MAX: 1000, DEFAULT: 300 } as const;
 /** Longest allowed upload window. */
 export const MAX_WINDOW_HOURS = 72;
 

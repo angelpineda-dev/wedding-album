@@ -109,7 +109,8 @@ model Event {
   geofenceEnabled    Boolean     @default(false)
   latitude           Float?
   longitude          Float?
-  radiusMeters       Int         @default(5000)
+  // Geofence radius in metres, 100–1000 (RADIUS_METERS in src/core/const/event.ts).
+  radiusMeters       Int         @default(300)
   moderationRequired Boolean     @default(true)
   // How often guests' galleries poll for new media.
   galleryPollSeconds Int         @default(120)
